@@ -338,7 +338,7 @@ void TUI::PrepareRedraw()
 	VERIFY(m_bReady);
 	if (m_Flags.is(flResize)) 			RealResize();
 // set render state
-#if 0
+
 	EDevice->SetRS(D3DRS_TEXTUREFACTOR,	0xffffffff);
 	// fog
 	u32 fog_color;
@@ -373,7 +373,7 @@ void TUI::PrepareRedraw()
 
 	EDevice->SetRS			(D3DRS_FILLMODE, EDevice->dwFillMode);
 	EDevice->SetRS			(D3DRS_SHADEMODE,EDevice->dwShadeMode);
-#endif
+
 	RCache.set_xform_world	(Fidentity);
 }
 
@@ -515,22 +515,25 @@ void TUI::Redraw()
 				
 				EDevice->Statistic->RenderDUMP_RT.End();
 				EDevice->Statistic->Show();
-				EDevice->SetRS(D3DRS_FILLMODE, D3DFILL_SOLID);
-				
-				g_FontManager->Render();
-				
-				EDevice->SetRS(D3DRS_FILLMODE, EDevice->dwFillMode);
-				EDevice->seqRender.Process(rp_Render);
 
-				if (g_pGamePersistent->OnRenderPPUI_query())
 				{
-					g_pGamePersistent->OnRenderPPUI_main();
+					xrCriticalSectionGuard guard(EDevice->Dx11Guard);
+					EDevice->SetRS(D3DRS_FILLMODE, D3DFILL_SOLID);
+
+					g_FontManager->Render();
+
+					EDevice->SetRS(D3DRS_FILLMODE, EDevice->dwFillMode);
+					EDevice->seqRender.Process(rp_Render);
+
+					if (g_pGamePersistent->OnRenderPPUI_query())
+					{
+						g_pGamePersistent->OnRenderPPUI_main();
+					}
+
+					RCache.set_RT(0, 1);
+					RCache.set_RT(0, 2);
+					RCache.set_RT(0, 3);
 				}
-
-				RCache.set_RT(0, 1);
-				RCache.set_RT(0, 2);
-				RCache.set_RT(0, 3);
-
 
 				// TODO DX11 EDITOR !!!
 				/*
@@ -551,6 +554,7 @@ void TUI::Redraw()
 				ID3D11RenderTargetView* RTV = RSwapchainTarget;
 				 //  Draw(); 
 				   // end draw
+				xrCriticalSectionGuard guard(EDevice->Dx11Guard);
 				UI->BeginFrame();
 
 				Draw();
@@ -601,7 +605,7 @@ void TUI::OnFrame()
 	SndLib->OnFrame		();
 	// tools on frame
 	if (m_Flags.is(flUpdateScene)) RealUpdateScene();
-	//Tools->OnFrame		();
+	Tools->OnFrame		();
 
 	// show hint
 	ResetBreak			();
@@ -844,8 +848,8 @@ void TUI::OnDrawUI()
 	UIMinimapEditorForm::Update();
     UIWeatherPropForm::Update();
 	UIIconPicker::Update();
-	//UILogForm::Update();
-	//EDevice->seqDrawUI.Process(rp_DrawUI);
+	UILogForm::Update();
+	EDevice->seqDrawUI.Process(rp_DrawUI);
 }
 
 void TUI::RealResetUI()
