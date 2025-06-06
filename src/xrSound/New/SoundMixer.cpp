@@ -40,7 +40,7 @@
 #define ENGINE_API
 #include "../xrEngine/xr_object.h"
 
-#define SND_HRTF_SLOT_COUNT (256)
+#define SND_HRTF_SLOT_COUNT (512)
 #define DEFAULT_SLOT_COUNT (2048)
 #define CACHE_LINES_COUNT (2048)
 #define CACHE_LINE_WIDTH (9)
@@ -249,6 +249,12 @@ static u64
 Snd_GetTimestamp()
 {
     return std::chrono::high_resolution_clock::now().time_since_epoch().count();
+}
+
+static u32
+Snd_Milliseconds()
+{
+    return (float)((Snd_GetTimestamp()) / 1000000);
 }
 
 static void
@@ -792,7 +798,7 @@ Snd_PhononSpatialProcess(float** data, u32 slot_idx)
 
     // Attenuation
     distance = std::clamp(distance, distances.x, distances.y);
-    float att = 0.5f + ((distances.x / (distances.x + psSoundRolloff * (distance - distances.x)) * 0.5f));
+    float att = distances.x / (psSoundRolloff * distance);
     att *= 1.0f - std::clamp(std::max(distance - distances.x, 0.0f) / ((distances.y - distances.x) * 2), 0.0f, 1.0f);
     att = std::clamp(att, 0.f, 1.f);
     for (size_t ch = 0; ch < SND_CHANNEL_COUNT; ch++) {
@@ -827,10 +833,12 @@ Snd_MixerRenderCallback(float* buffer)
     }
 
     for (auto& zone : mixer.zones) {
+        zone.use_count = 0;
         memset(zone.data, 0, sizeof(zone.data));
     }
 
     for (size_t i = 0; i < mixer.slots.size(); i++) {
+        PROF_EVENT("Slot Render");
         if (mixer.slots[i].state != Mixer::State::Playing) {
             continue;
         }
@@ -851,7 +859,11 @@ Snd_MixerRenderCallback(float* buffer)
 
         Snd_ProcessSlot(i + 1, process_buffer);
 
-        auto& source = mixer.sources.at(mixer.slots[i].sound_name.c_str());
+        if (!mixer.sources.contains(mixer.slots[i].sound_name)) {
+            continue;
+        }
+
+        auto& source = mixer.sources.at(mixer.slots[i].sound_name);
         auto& slot = mixer.slots[i];
         Fvector& pos = slot.parameters[(u32)Mixer::ParameterId::Position];
         Fvector& volumes = slot.parameters[(u32)Mixer::ParameterId::VolumePerChannel];
@@ -878,6 +890,7 @@ Snd_MixerRenderCallback(float* buffer)
 
         // Spatial processing
         if (slot.flags & (u32)Mixer::Flags::Spatial && source.pub.channels_count == 1) {
+            PROF_EVENT("Slot Spatial");
 #ifndef DISABLE_STEAM_AUDIO
             if (psSoundFlags.is(ss_HRTF) && mixer.ipl_hrtf_enabled) {
                 Snd_PhononSpatialProcess(process_buffer, i + 1);
@@ -889,6 +902,8 @@ Snd_MixerRenderCallback(float* buffer)
 
             if (slot.zone_idx) {
                 sound_zone_params& zone = mixer.zones.at(slot.zone_idx - 1);
+                zone.use_count++;
+                zone.last_use_ms = Snd_Milliseconds();
 
                 float* reverb_buffer[SND_CHANNEL_COUNT] = {};
                 for (size_t ch = 0; ch < SND_CHANNEL_COUNT; ch++) {
@@ -919,6 +934,11 @@ Snd_MixerRenderCallback(float* buffer)
     // Reverb mixing
     if (psSoundFlags.is(ss_EFX)) {
         for (auto& zone : mixer.zones) {
+            if (zone.use_count == 0 && (zone.last_use_ms + 3000) < Snd_Milliseconds()) {
+                continue;
+            }
+
+            PROF_EVENT("Reverb rendering");
             float* reverb_buffer[SND_CHANNEL_COUNT] = {};
             float* bus_buffer[SND_CHANNEL_COUNT] = {};
 
@@ -938,29 +958,32 @@ Snd_MixerRenderCallback(float* buffer)
     }
 #endif
 
-    float* master_buffer[SND_CHANNEL_COUNT] = {};
-    for (size_t ch = 0; ch < SND_CHANNEL_COUNT; ch++) {
-        master_buffer[ch] = mixer.buses[SND_BUS_MASTER].data[ch];
-    }
-
-    // Master mixing
-    for (size_t i = 0; i < SND_BUS_COUNT; i++) {
-        float* bus_buffer[SND_CHANNEL_COUNT] = {};
+    {
+        PROF_EVENT("Sound Mixing");
+        float* master_buffer[SND_CHANNEL_COUNT] = {};
         for (size_t ch = 0; ch < SND_CHANNEL_COUNT; ch++) {
-            bus_buffer[ch] = mixer.buses[i].data[ch];
+            master_buffer[ch] = mixer.buses[SND_BUS_MASTER].data[ch];
         }
 
-        DSP_MixBuffer(master_buffer, bus_buffer, 1.0f, 1.0f, SND_BLOCKSIZE);
-    }
+        // Master mixing
+        for (size_t i = 0; i < SND_BUS_COUNT; i++) {
+            float* bus_buffer[SND_CHANNEL_COUNT] = {};
+            for (size_t ch = 0; ch < SND_CHANNEL_COUNT; ch++) {
+                bus_buffer[ch] = mixer.buses[i].data[ch];
+            }
 
-    DSP_Compressor(0.001f, 0.040f, -10.0f, 2.5f, master_buffer, mixer.compression, SND_BLOCKSIZE, mixer.compressor_envelope);
+            DSP_MixBuffer(master_buffer, bus_buffer, 1.0f, 1.0f, SND_BLOCKSIZE);
+        }
 
-    // Clipping and master volume adjust
-    for (size_t i = 0; i < SND_BLOCKSIZE; i++) {
-        for (size_t ch = 0; ch < SND_CHANNEL_COUNT; ch++) {
-            float sample = master_buffer[ch][i];
-            sample = std::clamp(sample, -1.0f, 1.0f) * mixer.master_volume;
-            buffer[i * SND_CHANNEL_COUNT + ch] = sample;
+        DSP_Compressor(0.001f, 0.040f, -10.0f, 2.5f, master_buffer, mixer.compression, SND_BLOCKSIZE, mixer.compressor_envelope);
+
+        // Clipping and master volume adjust
+        for (size_t i = 0; i < SND_BLOCKSIZE; i++) {
+            for (size_t ch = 0; ch < SND_CHANNEL_COUNT; ch++) {
+                float sample = master_buffer[ch][i];
+                sample = std::clamp(sample, -1.0f, 1.0f) * mixer.master_volume;
+                buffer[i * SND_CHANNEL_COUNT + ch] = sample;
+            }
         }
     }
 
@@ -1650,7 +1673,6 @@ Mixer::GetZones()
 ref_sound::ref_sound()
 {
     xrSRWLockGuard g1(mixer.manage_lock);
-    xrSRWLockGuard g2(mixer.update_lock);
 
     if (!mixer.sounds.contains(this)) {
         mixer.sounds.emplace(this);
@@ -1660,7 +1682,6 @@ ref_sound::ref_sound()
 ref_sound::~ref_sound()
 {
     xrSRWLockGuard g1(mixer.manage_lock);
-    xrSRWLockGuard g2(mixer.update_lock);
 
     if (mixer.sounds.contains(this)) {
         mixer.sounds.erase(this);
