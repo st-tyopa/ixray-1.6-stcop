@@ -414,8 +414,8 @@ CRenderTarget::CRenderTarget()
 					const float blend_factor[4] = { 0.f, 0.f, 0.f, 0.f };
 					RContext->OMSetBlendState((ID3D11BlendState*)bd->pBlendState, blend_factor, 0xffffffff);
 				}
-				}, State);
-			};
+			}, State);
+		};
 
 		ID3D11BlendState* BlendState = nullptr;
 		if (!ImGui::Begin("GraphicDebug", &Engine.External.EditorStates[static_cast<std::uint8_t>(EditorUI::Shaders)], ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse)) {

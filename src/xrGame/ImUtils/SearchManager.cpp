@@ -718,7 +718,7 @@ void InitImGuiHudAdjustInGame()
 		xr_string FilePath = Platform::UTF8_to_CP1251(path.xstring());
 		imgui_hud_adjust_manager.settings.p_file = fopen(FilePath.c_str(), "wb+");
 
-		assert(imgui_hud_adjust_manager.settings.p_file && "failed to open file are you sure that system can read and write files on specified path?");
+		//assert(imgui_hud_adjust_manager.settings.p_file && "failed to open file are you sure that system can read and write files on specified path?");
 
 		need_to_init_defaults = true;
 	}

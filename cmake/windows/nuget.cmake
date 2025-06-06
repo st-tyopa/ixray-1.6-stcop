@@ -41,7 +41,7 @@ set(ENGINE_THRA ${CMAKE_BINARY_DIR}/packages/ImeSense.Packages.LibTheora.1.1.1.3
 set(SND_OGG ${CMAKE_BINARY_DIR}/packages/ImeSense.Packages.LibOgg.1.3.5.4/)
 
 # OpenAL
-set(SND_OAL ${CMAKE_BINARY_DIR}/packages/ImeSense.Packages.OpenALSoft.1.23.1.1/)
+#set(SND_OAL ${CMAKE_BINARY_DIR}/packages/ImeSense.Packages.OpenALSoft.1.23.1.1/)
 
 # Vorbis
 set(SND_VOB ${CMAKE_BINARY_DIR}/packages/ImeSense.Packages.LibVorbis.1.3.7.4/)
@@ -108,3 +108,9 @@ set(MYSQLCONNECTOR ${CMAKE_BINARY_DIR}/packages/IXRay.MySQLConnector.8.0.33/)
 
 # DLSS
 set(NVIDIA_DLSS ${CMAKE_BINARY_DIR}/packages/IXRay.DLSS.310.2.0/)
+
+# Steam Audio (Phonon)
+set(SA_CORE ${CMAKE_BINARY_DIR}/packages/IXRay.SteamAudio.4.6.1)
+set(SA_INCL ${SA_CORE}/include)
+set(SA_LIB  ${SA_CORE}/lib/phonon.lib)
+set(SA_BIN  ${SA_CORE}/bin/phonon.dll)
