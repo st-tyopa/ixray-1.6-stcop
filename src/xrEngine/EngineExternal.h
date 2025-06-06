@@ -99,6 +99,7 @@ public:
 	float GetTalkFovScale() const;
 	u32 GetFontAltasSize() const;
 	float GetSprintFovFactor() const;
+	bool isRenderingUIRaster() const;
 
 	bool operator[](const EEngineExternalUI& ID) const;
 	bool operator[](const EEngineExternalPhysical& ID) const;
@@ -109,12 +110,13 @@ public:
 
 	xr_string_map<xr_string, xr_string> ShadersOptions;
 	Ivector2 gamesaveSize;
-	unsigned char preferredUIRendering;
+
 
 private:
 	void InitPlatform(const char* pPlatformName);
 
 private:
+	EEngineExternalUIRenderingType m_preferredUIRendering;
 	EEngineExternalPlatform m_platform_type;
 	CInifile* pOptions;
 };
