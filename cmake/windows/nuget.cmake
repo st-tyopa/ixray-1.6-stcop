@@ -108,3 +108,9 @@ set(MYSQLCONNECTOR ${CMAKE_BINARY_DIR}/packages/IXRay.MySQLConnector.8.0.33/)
 
 # DLSS
 set(NVIDIA_DLSS ${CMAKE_BINARY_DIR}/packages/IXRay.DLSS.310.2.0/)
+
+# lunaSVG
+set(IXR_LUNASVG_PACKAGE ${CMAKE_BINARY_DIR}/packages/ixray.lunasvg.3.3.0/)
+set(IXR_LUNASVG_BIN ${IXR_LUNASVG_PACKAGE}bin/lunasvg.dll)
+set(IXR_LUNASVG_INC ${IXR_LUNASVG_PACKAGE}include)
+set(IXR_LUNASVG_LIB ${IXR_LUNASVG_PACKAGE}lib/lunasvg.lib)
