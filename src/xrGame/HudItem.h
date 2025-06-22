@@ -177,6 +177,7 @@ public:
 	virtual bool				CheckCompatibility		(CHudItem*)			{return true;}
 
 	virtual float GetHudFov();
+	void PlaySoundIfExist(LPCSTR alias, const Fvector& position, bool allowOverlap);
 	virtual bool AllowBore() { return !m_bDisableBore && m_eAnimationsFlags.test(EAnimationsFlags::af_bore); }
 
 	bool CanStartAction(CActor* pActor);
