@@ -710,7 +710,7 @@ Snd_ProcessSlot(u32 slot_idx, float** data)
 
     u32 output_frames = SND_BLOCKSIZE;
     float scaled_frames = (float)output_frames * pitch * mixer.time_factor;
-    u32 input_frames = (u32)scaled_frames;//ceilf(scaled_frames - 1e-6f);
+    u32 input_frames = std::min((u32)scaled_frames, (u32)SND_BLOCKSIZE);//ceilf(scaled_frames - 1e-6f);
 
     bool is_music = (slot.flags & (u16)Mixer::Flags::Intro);
 
@@ -850,6 +850,7 @@ Snd_MixerRenderCallback(float* buffer)
         }
 
         if (!mixer.sources.contains(mixer.slots[i].sound_name.c_str())) {
+            MixerNewState(i + 1, Mixer::State::Stopped);
             continue;
         }
 
@@ -866,6 +867,7 @@ Snd_MixerRenderCallback(float* buffer)
         Snd_ProcessSlot(i + 1, process_buffer);
 
         if (!mixer.sources.contains(mixer.slots[i].sound_name)) {
+            MixerNewState(i + 1, Mixer::State::Stopped);
             continue;
         }
 
