@@ -41,7 +41,7 @@
 #include "../xrEngine/xr_object.h"
 
 #define SND_HRTF_SLOT_COUNT (512)
-#define DEFAULT_SLOT_COUNT (2048)
+#define DEFAULT_SLOT_COUNT (4096)
 #define CACHE_LINES_COUNT (2048)
 #define CACHE_LINE_WIDTH (9)
 #define CACHE_LINE_ENTRY_COUNT (32)
@@ -854,8 +854,18 @@ Snd_MixerRenderCallback(float* buffer)
             continue;
         }
 
+        auto& slot = mixer.slots[i];
+        auto& source = mixer.sources.at(mixer.slots[i].sound_name);
+
         float occ_volume = 1.0f;
         if (!Snd_SlotOcclusion(i + 1, dt, &occ_volume)) {
+            // TODO: hack for simulated sounds
+            slot.position = std::min(slot.position + SND_BLOCKSIZE, source.pub.frames_total);
+            if (slot.position == source.pub.frames_total) {
+                MixerNewState(i + 1, Mixer::State::Stopped);
+                continue;
+            }
+
             continue;
         }
 
@@ -871,8 +881,6 @@ Snd_MixerRenderCallback(float* buffer)
             continue;
         }
 
-        auto& source = mixer.sources.at(mixer.slots[i].sound_name);
-        auto& slot = mixer.slots[i];
         Fvector& pos = slot.parameters[(u32)Mixer::ParameterId::Position];
         Fvector& volumes = slot.parameters[(u32)Mixer::ParameterId::VolumePerChannel];
         float begin_factor = 1.0f, end_factor = 1.0f;
