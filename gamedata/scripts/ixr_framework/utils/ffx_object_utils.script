@@ -1,0 +1,62 @@
+
+
+function safe_release(p,force)
+	local sim = alife()
+	local se_obj = p[1] and sim:object(p[1])
+	if not (se_obj) then
+		return true
+	end
+	
+	if (force) then 
+		sim:release(se_obj,true)
+	end
+
+	if (se_obj.online) then
+		if (se_obj:can_switch_offline()) then
+			se_obj:switch_offline()
+		end
+		return false
+	end
+	
+	sim:release(se_obj,true)
+
+	return true
+end
+
+
+function release(se_obj)
+	if (se_obj) then
+		local sim = alife()
+		sim:release(se_obj,true)
+	end
+end
+
+function create(tbl)
+	alife():create(tbl[1] ,tbl[2], tbl[3], tbl[4])
+end
+
+function get_inv_name(section)
+	local ini = system_ini()
+
+	return game.translate_string(ini:section_exist(section) and ini:line_exist(section, "inv_name") and ini:r_string(section, "inv_name") or section) or section
+end 
+
+function safe_bone_pos(npc, bone)
+    if not (npc) then
+		printf("safe_bone_pos: npc is nil!")
+		return
+    end
+	
+	local pos
+	if (IsStalker(npc)) then
+		pos = npc:bone_position(bone or "bip01_spine")
+		pos = pos and vector():set(pos) or nil
+	end
+
+	if not (pos) then
+		pos = vector():set(npc:position())
+		pos.y = pos.y + 0.5
+	end
+
+	return pos
+end

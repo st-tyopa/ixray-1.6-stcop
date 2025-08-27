@@ -12,6 +12,10 @@ function main_menu:__init() super()
 	self.mbox_mode = 0
     self:InitControls()
     self:InitCallBacks()
+	
+	SendScriptCallback("main_menu_on_init", self)
+	RegisterScriptCallback("on_localization_change", self)
+	
     xr_s.on_main_menu_on()     						 --' Distemper 03.2008 --
 end
 
@@ -99,6 +103,8 @@ function main_menu:InitCallBacks()
 
 	self:Register(self, "self")
 	self:AddCallback("self",	ui_events.MAIN_MENU_RELOADED, self.OnMenuReloaded, self)
+	
+	SendScriptCallback("main_menu_on_init_callbacks", self)
 end
 function main_menu:OnMsgOk()
 	self.mbox_mode = 0
@@ -180,6 +186,7 @@ function main_menu:OnButton_return_game()
 	local console = get_console()
 	console:execute("main_menu off")
 	xr_s.on_main_menu_off()      						--' Distemper 03.2008 --
+	SendScriptCallback("main_menu_on_quit", self)
 end
 
 function main_menu:OnButton_new_novice_game()
@@ -350,6 +357,8 @@ function main_menu:OnKeyboard(dik, keyboard_action)  --virtual function
 	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
 	local bind = dik_to_bind(dik)
 	local console = get_console()
+	
+	SendScriptCallback("main_menu_on_keyboard", dik, keyboard_action, self, level.present())
 
 	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 		if dik == DIK_keys.DIK_ESCAPE then

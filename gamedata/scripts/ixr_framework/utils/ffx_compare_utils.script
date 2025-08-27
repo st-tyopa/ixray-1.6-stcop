@@ -1,0 +1,136 @@
+
+--[[
+Description:
+  Checks if the object is a Lua table.
+Parameters:
+  object (any) - the object to check.
+Returns: boolean - true if the object is a table, otherwise false.
+]]
+function is_table(object)
+	if not object then 
+		return false
+	end
+	
+	return tostring(type(object)) == "table"
+end
+
+--[[
+Description:
+  Checks if a table (flat or associative) is empty at the root level.
+Parameters:
+  input_table (table) - the table to check.
+Returns: boolean - true if the table is empty or not a table, otherwise false.
+]]
+function is_empty_flat_or_assoc_table(input_table)
+	if not ffx_compare_utils.is_table(input_table) then
+		return true
+	end
+	
+	for _, value in pairs(input_table) do
+		return false
+	end
+	
+	return true
+end
+
+--[[
+Description:
+  Checks if the object is a Lua function.
+Parameters:
+  object (any) - the object to check.
+Returns: boolean - true if the object is a function, otherwise false.
+]]
+function is_function(object)
+	if not object then 
+		return false
+	end
+	
+	return tostring(type(object)) == "function"
+end
+
+--[[
+Description:
+  Checks if the object is userdata.
+Parameters:
+  object (any) - the object to check.
+Returns: boolean - true if the object is userdata, otherwise false.
+]]
+function is_userdata(object)
+	if not object then 
+		return false
+	end
+	
+	return tostring(type(object)) == "userdata"
+end
+
+--[[
+Description:
+  Checks that the string is not nil and not empty.
+Parameters:
+  str (string) - the string to check.
+Returns: boolean - true if the string is not empty, otherwise false.
+]]
+function is_not_empty_string(str)
+	return (str ~= nil and tostring(str) ~= "")
+end
+
+--[[
+Description:
+  Checks that the string is nil or empty.
+Parameters:
+  str (string) - the string to check.
+Returns: boolean - true if the string is empty or nil, otherwise false.
+]]
+function is_empty_string(str)
+	return (str == nil or tostring(str) == "")
+end
+
+--[[
+Description:
+  Checks if the object is a Lua number.
+Parameters:
+  object (any) - the object to check.
+Returns: boolean - true if the object is a number, otherwise false.
+]]
+function is_number(object)
+	if object  == nil then 
+		return false
+	end
+	
+	return tostring(type(object)) == "number"
+end
+
+--[[
+Description:
+  Checks if the given string matches the pattern where the wildcard character can appear multiple times.
+  The wildcard character matches any sequence of characters (including empty).
+Parameters:
+  str (string) - the string to test.
+  pattern (string) - the pattern containing literal characters and wildcard characters.
+  wildcard (string, optional) - the character used as a wildcard in the pattern; defaults to '*'.
+Returns:
+  boolean - true if the string matches the pattern; false otherwise.
+]]
+function has_pattern(str, pattern, wildcard)
+    wildcard = wildcard or "*"
+
+    if not pattern:find(wildcard, 1, true) then
+        return str == pattern
+    end
+
+    local parts = {}
+    for part in pattern:gmatch("[^" .. wildcard .. "]+") do
+        table.insert(parts, part)
+    end
+
+    local start_index = 1
+    for _, part in ipairs(parts) do
+        local part_index = str:find(part, start_index, true)
+        if not part_index then
+            return false
+        end
+        start_index = part_index + #part
+    end
+
+    return true
+end

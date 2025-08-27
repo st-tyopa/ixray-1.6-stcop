@@ -1,0 +1,17 @@
+
+
+function mul_in_direction(position, direction, length)
+	return clone(position):add(clone(direction):mul(length))
+end
+
+function clone(vec)
+	return vector():set(vec.x, vec.y, vec.z)
+end
+
+function get_decive_position()
+	return clone(device().cam_pos)
+end
+
+function get_decive_direction()
+	return clone(device().cam_dir)
+end

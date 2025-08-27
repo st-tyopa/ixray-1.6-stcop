@@ -1284,6 +1284,13 @@ end
 
 function pstor_save_all(obj, packet)
 	local npc_id = obj:id()
+	
+	if (USE_MARSHAL) then
+		db.storage[npc_id].pstor = db.storage[npc_id].pstor or {}
+		SendScriptCallback("on_pstor_save_all",obj,packet)
+		return
+	end
+	
 	local pstor = db.storage[npc_id].pstor
 	if not pstor then
 		pstor = {}
@@ -1317,6 +1324,13 @@ end
 
 function pstor_load_all(obj, reader)
 	local npc_id = obj:id()
+	
+	if (USE_MARSHAL) then
+		db.storage[npc_id].pstor = db.storage[npc_id].pstor or {}
+		SendScriptCallback("on_pstor_load_all", obj, reader)
+		return
+	end
+	
 	local pstor = db.storage[npc_id].pstor
 	if not pstor then
 		pstor = {}

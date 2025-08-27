@@ -2,27 +2,284 @@ if (jit == nil) then
 	profiler.setup_hook	()
 end
 
-
-function empty	(container)
-	if (type(container) == "function") then
-		for i in container do
-			return	(false)
-		end
-		return		(true)
-	end
-	assert			(type(container) == "table")
-	if (container[1] ~= nil) then
-		return		(false)
-	end
-	for i,j in pairs(container) do
-		return		(false)
-	end
-	return			(true)
+if nil == time_global then
+	time_global = function () return device():time_global() end
 end
 
+----------------------------------------------------------------------
+local aa = nil
+dev_debug = false
+sim_debug = false
+mus_vol = 0
+amb_vol = 0
+b_discard_settings_shown = false
+-- Константа, которую использовать в местах, где нужно задать неограниченное время действия
+time_infinite = 100000000
+----------------------------------------------------------------------
 
-schemes = {} -- соответствие схем модулям
 stypes = {} -- типы схем
+schemes = {} -- соответствие схем модулям
+ammo_section = {}
+squad_community_by_behaviour = {}
+
+local monster_classes = {}
+local stalker_classes = {}
+local weapon_classes = {}
+local artefact_classes = {}
+local scripts_to_print = {}
+
+
+function get_scripts_to_prints()
+	return {
+		["stalker_generic"] 		= true,
+		["xr_smartcover"] 			= true,
+		["xr_logic"] 				= true,
+		["xr_conditions"] 			= true,
+		["xr_cover"] 				= true,
+		["xr_motivator"] 			= true,
+		["xr_walker"] 				= true,
+		["xr_camper"] 				= true,
+		["xr_kamp"] 				= true,
+		["restrictor_manager"] 		= true,
+		["sim_board"] 				= true,
+		["sim_faction"] 			= true,
+		["post_combat_idle"] 		= true,
+		["xr_death"] 				= true,
+		["xr_sound"] 				= true,
+		["utils"] 					= true,
+		["treasure_manager"] 		= true,
+		["object_collection"] 		= true,
+		["se_actor"] 				= true,
+		["smart_terrain"] 			= true,
+		["bind_physic_object"] 		= true,
+		["bind_heli"] 				= true,
+		["bind_anomaly_zone"] 		= true,
+		["bind_stalker"] 			= true,
+		["state_mgr_animation"] 	= true,
+		["se_stalker"] 				= true,
+		["db"] 						= true,
+		["sim_squad_generic"] 		= true,
+		["sim_squad_scripted"] 		= true,
+		["se_smart_cover"] 			= true,
+		["se_monster"] 				= true,
+		["dialog_manager"] 			= true,
+		["xr_combat_ignore"] 		= true,
+		["xr_remark"] 				= true,
+		["cover_manager"] 			= true,
+		["xr_danger"]	 			= true,
+		["task_manager"] 			= true,
+		["task_objects"]	 		= true,
+	}
+end
+
+function get_ammo_sections()
+	return {
+		["ammo_9x18_fmj"]			= true,
+		["ammo_9x18_pmm"]			= true,
+		["ammo_9x19_fmj"]			= true,
+		["ammo_9x19_pbp"]			= true,
+		["ammo_5.45x39_fmj"]		= true,
+		["ammo_5.45x39_ap"]			= true,
+		["ammo_5.56x45_ss190"]		= true,
+		["ammo_5.56x45_ap"]			= true,
+		["ammo_5.7x28_fmj"]			= true,
+		["ammo_5.7x28_ap"]			= true,
+		["ammo_7.62x54_7h1"]		= true,
+		["ammo_9x39_pab9"]			= true,
+		["ammo_gauss"]				= true,
+		["ammo_9x39_ap"]			= true,
+		["ammo_11.43x23_fmj"]		= true,
+		["ammo_11.43x23_hydro"]		= true,
+		["ammo_12x70_buck"]			= true,
+		["ammo_12x76_zhekan"]		= true,
+		["ammo_pkm_100"]			= true,
+	}
+end
+
+function get_monster_classes()
+	return {
+		[clsid.bloodsucker_s] 			= true,
+		[clsid.boar_s] 					= true,
+		[clsid.dog_s] 					= true,
+		[clsid.flesh_s] 				= true,
+		[clsid.pseudodog_s] 			= true,
+		[clsid.burer_s] 				= true,
+--		[clsid.cat_s] 					= true,
+		[clsid.chimera_s] 				= true,
+		[clsid.controller_s] 			= true,
+--		[clsid.fracture_s] 				= true,
+		[clsid.poltergeist_s] 			= true,
+		[clsid.gigant_s] 				= true,
+--		[clsid.zombie_s] 				= true,
+		[clsid.snork_s] 				= true,
+		[clsid.tushkano_s] 				= true,
+		[clsid.psy_dog_s] 				= true,
+		[clsid.psy_dog_phantom_s] 		= true,
+	}
+end
+
+function get_stalker_classes()
+	return {
+		[clsid.script_actor] 			= true,
+		[clsid.script_stalker] 			= true,
+	}
+end
+
+function get_weapon_classes()
+	return {
+		[clsid.wpn_vintorez_s] 			= true,
+		[clsid.wpn_ak74_s] 				= true,
+		[clsid.wpn_lr300_s] 			= true,
+		[clsid.wpn_hpsa_s] 				= true,
+		[clsid.wpn_pm_s] 				= true,
+		[clsid.wpn_shotgun_s] 			= true,
+		[clsid.wpn_auto_shotgun_s]		= true,
+		[clsid.wpn_bm16_s] 				= true,
+		[clsid.wpn_svd_s] 				= true,
+		[clsid.wpn_svu_s] 				= true,
+		[clsid.wpn_rg6_s] 				= true,
+		[clsid.wpn_rpg7_s] 				= true,
+		[clsid.wpn_val_s] 				= true,
+		[clsid.wpn_walther_s] 			= true,
+		[clsid.wpn_usp45_s] 			= true,
+		[clsid.wpn_groza_s] 			= true,
+		[clsid.wpn_knife_s] 			= true,
+		[clsid.wpn_grenade_f1_s] 		= true,
+		[clsid.wpn_grenade_rgd5_s] 		= true,
+		[clsid.wpn_grenade_launcher] 	= true,
+		[clsid.wpn_grenade_fake] 		= true,
+	}
+end
+
+function get_artefact_classes()
+	return {
+		[clsid.art_bast_artefact] 		= true,
+		[clsid.art_black_drops] 		= true,
+		[clsid.art_dummy] 				= true,
+		[clsid.art_electric_ball] 		= true,
+		[clsid.art_faded_ball] 			= true,
+		[clsid.art_galantine] 			= true,
+		[clsid.art_gravi] 				= true,
+		[clsid.art_gravi_black] 		= true,
+		[clsid.art_mercury_ball] 		= true,
+		[clsid.art_needles] 			= true,
+		[clsid.art_rusty_hair] 			= true,
+		[clsid.art_thorn] 				= true,
+		[clsid.art_zuda] 				= true,
+		[clsid.artefact] 				= true,
+		[clsid.artefact_s] 				= true,
+	}
+end
+
+function get_squad_community_by_behaviour()
+	return {
+		["stalker"]							= "stalker",
+		["bandit"]							= "bandit",
+		["dolg"]							= "dolg",
+		["freedom"]							= "freedom",
+		["army"]							= "army",
+		["ecolog"]							= "ecolog",
+		["killer"]							= "killer",
+		["zombied"]							= "zombied",
+		["monolith"]						= "monolith",
+		["monster"]							= "monster",
+		["monster_predatory_day"]			= "monster",
+		["monster_predatory_night"]			= "monster",
+		["monster_vegetarian"]				= "monster",
+		["monster_zombied_day"]				= "monster",
+		["monster_zombied_night"]			= "monster",
+		["monster_special"]					= "monster",
+	}
+end
+
+--------------------------------------------
+function start_game_callback()
+	aa = alife()
+
+	scripts_to_print = get_scripts_to_prints()
+	squad_community_by_behaviour = get_squad_community_by_behaviour()
+	ammo_section = get_ammo_sections()
+	monster_classes = get_monster_classes()
+	stalker_classes = get_stalker_classes()
+	weapon_classes = get_weapon_classes()
+	artefact_classes = get_artefact_classes()
+
+	printf("start_game_callback [called]")
+	SemiLog("start_game_callback [called]")
+	
+	smart_names.init_smart_names_table()
+	task_manager.clear_task_manager()
+	sound_theme.load_sound()
+	xr_sound.start_game_callback()
+	dialog_manager.fill_phrase_table()
+	xr_s.init()
+	sim_objects.clear()
+	sim_board.clear()
+	sr_light.clean_up ()
+	pda.add_quick_slot_items_on_game_start()
+end
+
+--------------------------------------------
+--' Усталость
+function on_actor_critical_power()
+
+end
+
+function on_actor_critical_max_power()
+
+end
+
+--' Кровотечение
+function on_actor_bleeding()
+
+end
+
+function on_actor_satiety()
+
+end
+
+--' Радиация
+function on_actor_radiation()
+
+end
+
+--' Заклинило оружие
+function on_actor_weapon_jammed()
+
+end
+
+--' не может ходить изза веса
+function on_actor_cant_walk_weight()
+
+end
+
+--' пси воздействие
+function on_actor_psy()
+
+end
+--------------------------------------------
+
+function empty(container)
+	if (type(container) == "function") then
+		for i in container do
+			return (false)
+		end
+		
+		return (true)
+	end
+	
+	assert(type(container) == "table")
+	
+	if (container[1] ~= nil) then
+		return (false)
+	end
+	
+	for i,j in pairs(container) do
+		return (false)
+	end
+	
+	return (true)
+end
 
 -- Загружает схему из файла на диске и активирует в мотиваторе.
 -- Здесь:
@@ -33,53 +290,6 @@ function load_scheme(filename, scheme, stype)
 	stypes[scheme] = stype
 end
 
-----------------------------------------------------------------------
-dev_debug = false
-sim_debug = false
-mus_vol = 0
-amb_vol = 0
-b_discard_settings_shown = false
-----------------------------------------------------------------------
-local scripts_to_print =	{
-							["stalker_generic"] = true,
-							["xr_smartcover"] = true,
-							["xr_logic"] = true,
-							["xr_conditions"] = true,
-							["xr_cover"] = true,
-							["xr_motivator"] = true,
-							["xr_walker"] = true,
-							["xr_camper"] = true,
-							["xr_kamp"] = true,
-							["restrictor_manager"] = true,
-							["sim_board"] = true,
-							["sim_faction"] = true,
-							["post_combat_idle"] = true,
-							["xr_death"] = true,
-							["xr_sound"] = true,
-							["utils"] = true,
-							["treasure_manager"] = true,
-							["object_collection"] = true,
-							["se_actor"] = true,
-							["smart_terrain"] = true,
-							["bind_physic_object"] = true,
-							["bind_heli"] = true,
-							["bind_anomaly_zone"] = true,
-							["bind_stalker"] = true,
-							["state_mgr_animation"] = true,
-							["se_stalker"] = true,
-							["db"] = true,
-							["sim_squad_generic"] = true,
-							["sim_squad_scripted"] = true,
-							["se_smart_cover"] = true,
-							["se_monster"] = true,
-							["dialog_manager"] = true,
-							["xr_combat_ignore"] = true,
-							["xr_remark"] = true,
-							["cover_manager"] = true,
-							["xr_danger"]	 = true,
-							["task_manager"] = true,
-							["task_objects"]	 = true
-							}
 function printf(fmt,...)
 
 	local is_g = 0
@@ -102,11 +312,6 @@ function printf(fmt,...)
 	end
 	log(string.format(result,...))
 
-end
-
-----------------------------------------------------------------------
-if nil == time_global then
-	time_global = function () return device():time_global() end
 end
 
 function wait_game(time_to_wait)
@@ -155,6 +360,7 @@ function action_first(obj,...)
 	local arg = {...}
 	local act = entity_action()
 	local i = 1
+	
 	while true do
 		if (arg[i] ~= nil) then
 			act:set_action(arg[i])
@@ -163,16 +369,20 @@ function action_first(obj,...)
 		end
 		i = i + 1
 	end
+	
 	if (obj ~= nil) then
 		obj:command(act,true)
 	end
+	
 	return  entity_action(act)
 end
 
 function round (value)
 	local min = math.floor (value)
 	local max = min + 1
+	
 	if value - min > max - value then return max end
+	
 	return min
 end
 
@@ -184,15 +394,16 @@ end
 -- Если один объект nil, например нет актера, то считаем, что он далеко
 function distance_between_safe(obj1, obj2)
 	if(obj1 == nil or obj2 == nil) then return 100000 end
+	
 	return obj1:position():distance_to(obj2:position())
 end
 
-local aa = nil
 --' Проверка на инфопоршни, даже если игрока не существует
 function has_alife_info(info_id)
 	if aa == nil then
 		return false
 	end
+	
 	return aa:has_info(0, info_id)
 end
 
@@ -202,15 +413,13 @@ function reset_action (npc, script_name)
 	if npc:get_script () then
 		 npc:script (false, script_name)
 	end
+	
 	npc:script (true, script_name)
 end
 
 --------------------------------------------------
 -- Functions and variables added by Zmey
 --------------------------------------------------
-
--- Константа, которую использовать в местах, где нужно задать неограниченное время действия
-time_infinite = 100000000
 
 -- Если в данный момент выполняется какое-то действие, прерывает его и отключает скриптовый режим
 function interrupt_action(who, script_name)
@@ -222,6 +431,7 @@ end
 function random_choice(...)
 	local arg = {...}
 	local r = math.random(1, #arg)
+	
 	return arg[r]
 end
 
@@ -229,6 +439,7 @@ function if_then_else(cond, if_true, if_false)
 	if cond then
 		return if_true
 	end
+	
 	return if_false
 end
 
@@ -244,7 +455,9 @@ function set_current_time (hour, min, sec)
 	if c_time > n_time then c_day = c_day + 1 end
 	n_time = n_time + c_day * 86400000
 	level.set_time_factor (10000)
+	
 	while game.time () < n_time do wait () end
+	
 	level.set_time_factor (current_time_factor)
 end
 
@@ -264,15 +477,19 @@ function parse_names( s )
 		--for name in string.gfind( s, "%s*([^%,]+)%s*" ) do
 		table.insert( t, name )
 	end
+	
 	return t
 end
 
 function parse_key_value( s )
 	local t = {}
+	
 	if s == nil then
 		return nil
 	end
+	
 	local key, nam = nil, nil
+	
 	for name in string.gfind( s, "([%w_\\]+)%p*" ) do
 		if key == nil then
 			key = name
@@ -281,14 +498,17 @@ function parse_key_value( s )
 			key = nil
 		end
 	end
+	
 	return t
 end
 
 function parse_nums( s )
 	local t = {}
+	
 	for entry in string.gfind( s, "([%-%d%.]+)%,*" ) do
 		table.insert( t, tonumber( entry ) )
 	end
+	
 	return t
 end
 
@@ -299,6 +519,7 @@ end
 
 function get_clsid(npc)
 	if npc == nil then return nil end
+	
 	return npc:clsid()
 end
 
@@ -306,12 +527,15 @@ end
 function yaw( v1, v2 )
 	return  math.acos( ( (v1.x*v2.x) + (v1.z*v2.z ) ) / ( math.sqrt(v1.x*v1.x + v1.z*v1.z ) * math.sqrt(v2.x*v2.x + v2.z*v2.z ) ) )
 end
+
 function yaw_degree( v1, v2 )
-	return  (math.acos( ( (v1.x*v2.x) + (v1.z*v2.z ) ) / ( math.sqrt(v1.x*v1.x + v1.z*v1.z ) * math.sqrt(v2.x*v2.x + v2.z*v2.z ) ) ) * 57.2957)
+	return  (math.acos( ( (v1.x * v2.x) + (v1.z*v2.z ) ) / ( math.sqrt(v1.x*v1.x + v1.z*v1.z ) * math.sqrt(v2.x*v2.x + v2.z*v2.z ) ) ) * 57.2957)
 end
+
 function yaw_degree3d( v1, v2 )
-	return  (math.acos((v1.x*v2.x + v1.y*v2.y + v1.z*v2.z)/(math.sqrt(v1.x*v1.x + v1.y*v1.y + v1.z*v1.z )*math.sqrt(v2.x*v2.x + v2.y*v2.y + v2.z*v2.z)))*57.2957)
+	return  (math.acos( ( v1.x*v2.x + v1.y*v2.y + v1.z*v2.z ) / ( math.sqrt(v1.x*v1.x + v1.y*v1.y + v1.z*v1.z ) * math.sqrt( v2.x*v2.x + v2.y*v2.y + v2.z*v2.z ) ) ) * 57.2957)
 end
+
 function vector_cross(v1, v2)
 	return vector():set(v1.y  * v2.z  - v1.z  * v2.y, v1.z  * v2.x  - v1.x  * v2.z, v1.x  * v2.y  - v1.y  * v2.x)
 end
@@ -321,6 +545,7 @@ function vector_rotate_y(v, angle)
 	angle = angle * 0.017453292519943295769236907684886
 	local c = math.cos (angle)
 	local s = math.sin (angle)
+	
 	return vector ():set (v.x * c - v.z * s, v.y, v.x * s + v.z * c)
 end
 
@@ -377,14 +602,18 @@ function print_table(table, subs)
 		end
 	end
 end
+
 function store_table(table, subs)
 	local sub
+	
 	if subs ~= nil then
 		sub = subs
 	else
 		sub = ""
 	end
+	
 	printf(sub.."{")
+	
 	for k,v in pairs(table) do
 		if type(v) == "table" then
 			printf(sub.."%s = ", tostring(k))
@@ -399,31 +628,33 @@ function store_table(table, subs)
 			printf(sub.."%s = %s,", tostring(k), tostring(v))
 		end
 	end
+	
 	printf(sub.."},")
 end
 
 -------------------------------------------------------------------------------------------
-local monster_classes = {}
-local stalker_classes = {}
-local weapon_classes = {}
-local artefact_classes = {}
 
 function IsMonster (object, class_id)
-		local id = class_id or get_clsid(object)
-		return monster_classes[id] == true
+	local id = class_id or get_clsid(object)
+	
+	return monster_classes[id] == true
 end
+
 function IsStalker (object, class_id)
-		local id = class_id or get_clsid(object)
-		return stalker_classes[id] == true
+	local id = class_id or get_clsid(object)
+	
+	return stalker_classes[id] == true
 end
 
 function isWeapon(object, class_id)
 	local id = class_id or get_clsid(object)
+	
 	return weapon_classes[id] == true
 end
 
 function isArtefact(object, class_id)
-		local id = class_id or get_clsid(object)
+	local id = class_id or get_clsid(object)
+	
 	return artefact_classes[id] == true
 end
 
@@ -441,6 +672,7 @@ function character_community (obj)
 	if IsStalker(obj) then
 		return obj:character_community()
 	end
+	
 	return "monster"
 end
 
@@ -448,20 +680,24 @@ function alife_character_community (obj)
 	if IsStalker(obj, obj:clsid()) then
 		return obj:community()
 	end
+	
 	return "monster"
 end
 
 -- получить геймобжект по стори_айди.
 function level_object_by_sid( sid )
 	local sim = alife()
+	
 	if sim then
 		local se_obj = sim:story_object( sid )
 		if se_obj then
 			return level.object_by_id( se_obj.id )
 		end
 	end
+	
 	return nil
 end
+
 -- Получить айдишник обьекта по стори айди.
 function id_by_sid( sid )
 	local sim = alife()
@@ -471,6 +707,7 @@ function id_by_sid( sid )
 			return se_obj.id
 		end
 	end
+	
 	return nil
 end
 
@@ -508,151 +745,14 @@ function npc_in_actor_frustrum(npc)
 	local npc_dir = npc:position():sub(db.actor:position())
 	local yaw = yaw_degree3d(actor_dir, npc_dir)
 	--printf("YAW %s", tostring(yaw))
+	
 	return yaw < 35
-end
-
-function start_game_callback()
-	aa = alife()
-
-	squad_community_by_behaviour = {
-		["stalker"]							= "stalker",
-		["bandit"]							= "bandit",
-		["dolg"]							= "dolg",
-		["freedom"]							= "freedom",
-		["army"]							= "army",
-		["ecolog"]							= "ecolog",
-		["killer"]							= "killer",
-		["zombied"]							= "zombied",
-		["monolith"]						= "monolith",
-		["monster"]							= "monster",
-		["monster_predatory_day"]			= "monster",
-		["monster_predatory_night"]			= "monster",
-		["monster_vegetarian"]				= "monster",
-		["monster_zombied_day"]				= "monster",
-		["monster_zombied_night"]			= "monster",
-		["monster_special"]					= "monster"
-	}
-
-
-
-
-	monster_classes = {
-		[clsid.bloodsucker_s] 			= true,
-		[clsid.boar_s] 					= true,
-		[clsid.dog_s] 					= true,
-		[clsid.flesh_s] 				= true,
-		[clsid.pseudodog_s] 			= true,
-		[clsid.burer_s] 				= true,
---		[clsid.cat_s] 					= true,
-		[clsid.chimera_s] 				= true,
-		[clsid.controller_s] 			= true,
---		[clsid.fracture_s] 				= true,
-		[clsid.poltergeist_s] 			= true,
-		[clsid.gigant_s] 				= true,
---		[clsid.zombie_s] 				= true,
-		[clsid.snork_s] 				= true,
-		[clsid.tushkano_s] 				= true,
-		[clsid.psy_dog_s] 				= true,
-		[clsid.psy_dog_phantom_s] 		= true}
-
-	stalker_classes = {
-		[clsid.script_actor] 			= true,
-		[clsid.script_stalker] 			= true}
-
-	weapon_classes = {
-		[clsid.wpn_vintorez_s] 			= true,
-		[clsid.wpn_ak74_s] 				= true,
-		[clsid.wpn_lr300_s] 			= true,
-		[clsid.wpn_hpsa_s] 				= true,
-		[clsid.wpn_pm_s] 				= true,
-		[clsid.wpn_shotgun_s] 			= true,
-		[clsid.wpn_auto_shotgun_s]		= true,
-		[clsid.wpn_bm16_s] 				= true,
-		[clsid.wpn_svd_s] 				= true,
-		[clsid.wpn_svu_s] 				= true,
-		[clsid.wpn_rg6_s] 				= true,
-		[clsid.wpn_rpg7_s] 				= true,
-		[clsid.wpn_val_s] 				= true,
-		[clsid.wpn_walther_s] 			= true,
-		[clsid.wpn_usp45_s] 			= true,
-		[clsid.wpn_groza_s] 			= true,
-		[clsid.wpn_knife_s] 			= true,
-		[clsid.wpn_grenade_f1_s] 		= true,
-		[clsid.wpn_grenade_rgd5_s] 		= true,
-		[clsid.wpn_grenade_launcher] 	= true,
-		[clsid.wpn_grenade_fake] 		= true}
-
-	artefact_classes = {
-		[clsid.art_bast_artefact] 		= true,
-		[clsid.art_black_drops] 		= true,
-		[clsid.art_dummy] 				= true,
-		[clsid.art_electric_ball] 		= true,
-		[clsid.art_faded_ball] 			= true,
-		[clsid.art_galantine] 			= true,
-		[clsid.art_gravi] 				= true,
-		[clsid.art_gravi_black] 		= true,
-		[clsid.art_mercury_ball] 		= true,
-		[clsid.art_needles] 			= true,
-		[clsid.art_rusty_hair] 			= true,
-		[clsid.art_thorn] 				= true,
-		[clsid.art_zuda] 				= true,
-		[clsid.artefact] 				= true,
-		[clsid.artefact_s] 				= true}
-
-	printf	("start_game_callback called")
-	smart_names.init_smart_names_table()
-	task_manager.clear_task_manager()
-	sound_theme.load_sound()
-	xr_sound.start_game_callback()
-	dialog_manager.fill_phrase_table()
-	xr_s.init()
-	sim_objects.clear()
-	sim_board.clear()
-	sr_light.clean_up ()
-	pda.add_quick_slot_items_on_game_start()
-	-- Tестирование оптимизации
-	--local test_object = test_object.test_object_class()
-	--test_object:test()
-end
-
---' Усталость
-function on_actor_critical_power()
-
-end
-
-function on_actor_critical_max_power()
-end
-
---' Кровотечение
-function on_actor_bleeding()
-
-end
-
-function on_actor_satiety()
-end
-
---' Радиация
-function on_actor_radiation()
-
-end
-
---' Заклинило оружие
-function on_actor_weapon_jammed()
-
-end
-
---' не может ходить изза веса
-function on_actor_cant_walk_weight()
-
-end
-
---' пси воздействие
-function on_actor_psy()
 end
 
 function give_info (info)
 	db.actor:give_info_portion(info)
 end
+
 function disable_info (info)
 	if has_alife_info(info) then
 		printf("*INFO*: disabled npc='single_player' id='%s'", info)
@@ -662,39 +762,20 @@ end
 
 function create_ammo(section, position, lvi, gvi, pid, num)
 	local ini = system_ini()
-
 	local num_in_box = ini:r_u32(section, "box_size")
 	local t = {}
+	
 	while num > num_in_box do
 		local obj = alife():create_ammo(section, position, lvi,	gvi, pid, num_in_box)
 		table.insert(t, obj)
 		num = num - num_in_box
 	end
+	
 	local obj = alife():create_ammo(section, position, lvi,	gvi, pid, num)
 	table.insert(t, obj)
+	
 	return t
 end
-
-ammo_section = {}
-ammo_section["ammo_9x18_fmj"]		= true
-ammo_section["ammo_9x18_pmm"]		= true
-ammo_section["ammo_9x19_fmj"]		= true
-ammo_section["ammo_9x19_pbp"]		= true
-ammo_section["ammo_5.45x39_fmj"]	= true
-ammo_section["ammo_5.45x39_ap"]		= true
-ammo_section["ammo_5.56x45_ss190"]	= true
-ammo_section["ammo_5.56x45_ap"]		= true
-ammo_section["ammo_5.7x28_fmj"]		= true
-ammo_section["ammo_5.7x28_ap"]		= true
-ammo_section["ammo_7.62x54_7h1"]	= true
-ammo_section["ammo_9x39_pab9"]		= true
-ammo_section["ammo_gauss"]			= true
-ammo_section["ammo_9x39_ap"]		= true
-ammo_section["ammo_11.43x23_fmj"]	= true
-ammo_section["ammo_11.43x23_hydro"]	= true
-ammo_section["ammo_12x70_buck"]		= true
-ammo_section["ammo_12x76_zhekan"]	= true
-ammo_section["ammo_pkm_100"]		= true
 
 quest_section = {}
 -- преобразует строку в соответствии со значением
@@ -702,6 +783,7 @@ function get_param_string(src_string , obj)
 	--printf("src_string is [%s] obj name is [%s]", tostring(src_string), obj:name())
 	local script_ids = db.script_ids[obj:id()]
 	local out_string, num = string.gsub(src_string, "%$script_id%$", tostring(script_ids))
+	
 	if num > 0 then
 		return out_string , true
 	else
@@ -751,6 +833,7 @@ function set_save_marker(p, mode, check, prefix)
 			 	printf(result..": LOAD DIF: %s", dif)
 			 end
 		end
+		
 		return
 	end
 
@@ -766,20 +849,25 @@ function set_save_marker(p, mode, check, prefix)
 	end
 
 end
+
 -- переводит вектор в строку.
 function vec_to_str (vector)
 	if vector == nil then return "nil" end
+	
 	return string.format("[%s:%s:%s]", vector.x, vector.y, vector.z)
 end
+
 -- выводит в лог стэк вызова функций.
 function callstack()
 	if debug ~= nil then
 		log(debug.traceback(2))
 	end
 end
+
 -- меняет team:squad:group обьекта.
 function change_team_squad_group(se_obj, team, squad, group)
 	local cl_obj = db.storage[se_obj.id] and db.storage[se_obj.id].object
+	
 	if cl_obj ~= nil then
 		cl_obj:change_team(team, squad, group)
 	else
@@ -789,7 +877,8 @@ function change_team_squad_group(se_obj, team, squad, group)
 	end
 	--printf("_G:TSG: [%s][%s][%s]", tostring(se_obj.team), tostring(se_obj.squad), tostring(se_obj.group))
 end
---     Story_ID -------------------------------------------------------------
+
+--  Story_ID -------------------------------------------------------------
 function add_story_object(obj_id , story_obj_id)
 	story_objects.get_story_objects_registry():register(obj_id , story_obj_id)
 end
@@ -797,6 +886,7 @@ end
 function get_story_object(story_obj_id)
 	local obj_id = story_objects.get_story_objects_registry():get(story_obj_id)
 	if obj_id == nil then return nil end
+	
 	return (db.storage[obj_id] and db.storage[obj_id].object) or (level ~= nil and level.object_by_id(obj_id))
 end
 
@@ -820,27 +910,34 @@ end
 -- Получить сквад обьекта!!!!!
 function get_object_squad(object)
 	if object == nil then abort("You are trying to get squad_object from NIL object!!!") end
+	
 	local obj_id = nil
+	
 	if type(object.id) == "function" then
 		obj_id = object:id()
 	else
 		obj_id = object.id
 	end
+	
 	local se_obj = alife():object(obj_id)
+	
 	if se_obj and se_obj.group_id ~= 65535 then
 		return alife():object(se_obj.group_id)
 	end
+	
 	return nil
 end
 
 function get_story_squad(story_id)
 	local squad_id = get_story_object_id(story_id)
+	
 	return squad_id and alife():object(squad_id)
 end
 
 --Проверка по временному интервалу.
 function in_time_interval(val1, val2)
 	local game_hours = level.get_time_hours()
+	
 	if val1 >= val2 then
 		return game_hours < val2 or game_hours >= val1
 	else
@@ -849,21 +946,263 @@ function in_time_interval(val1, val2)
 end
 
 function show_all_ui(show)
-		local hud = get_hud()
+	local hud = get_hud()
+	
 	if(show) then
-			level.show_indicators()
---	    db.actor:restore_weapon()
-			db.actor:disable_hit_marks(false)
-			hud:show_messages()
+		level.show_indicators()
+		-- db.actor:restore_weapon()
+		db.actor:disable_hit_marks(false)
+		hud:show_messages()
 	else
-			if db.actor:is_talking() then
-					db.actor:stop_talk()
-			end
-			level.hide_indicators_safe()
-			hud:HideActorMenu()
-			hud:HidePdaMenu()
-			hud:hide_messages()
---	    db.actor:hide_weapon()
-			db.actor:disable_hit_marks(true)
+		if db.actor:is_talking() then
+			db.actor:stop_talk()
+		end
+		
+		level.hide_indicators_safe()
+		hud:HideActorMenu()
+		hud:HidePdaMenu()
+		hud:hide_messages()
+		-- db.actor:hide_weapon()
+		db.actor:disable_hit_marks(true)
 	end
+end
+
+------------------------------------------------------------------------------------------------------
+-- 						UTILS
+------------------------------------------------------------------------------------------------------
+function clamp(val, min, max)
+	return (val < min and min) or (val > max and max) or val
+end
+
+function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+function trim(s)
+	return string.gsub(s, "^%s*(.-)%s*$", "%1")
+end
+
+function str_explode(str, div, dont_trim)
+	if not (dont_trim) then 
+		trim(str)
+	end 
+	
+	local t = {}
+	local cpt = string.find (str, div, 1, true)
+	local a = ""
+	
+	if cpt then
+		repeat
+			if not dont_trim then
+				a = trim(string.sub(str, 1, cpt-1))
+				table.insert( t, a )
+			else
+				table.insert( t, string.sub(str, 1, cpt-1) )
+			end
+			str = string.sub( str, cpt+string.len(div) )
+			cpt = string.find (str, div, 1, true)
+		until cpt==nil
+	end
+	
+	if not dont_trim then
+		a = trim(str)
+		table.insert(t, a)
+	else
+		table.insert(t, str)
+	end
+	return t
+end
+
+local con = nil
+local cmd_args = nil
+
+function exec_command(command)
+	if not con then
+		con = get_console()
+	end
+	
+	con:execute(command)
+end
+
+function get_cmd_args()
+	if not cmd_args then
+		cmd_args = command_line()
+	end
+	
+	return cmd_args
+end
+
+function has_cmd_arg(arg_name)
+	return string.find(get_cmd_args(), arg_name) or string.find(get_cmd_args(), "-"..arg_name)
+end
+
+------------------------------------------------------------------------------------------------------
+-- ENGINE EXPORTS!!!
+------------------------------------------------------------------------------------------------------
+-- called when an inventory item is eaten/used
+-- returning false will prevent the item from being used
+function CInventory__eat(npc_gobj, item_gobj)
+	local flags = { ret_value = true }
+	
+	if npc_gobj and npc_gobj:id() == db.actor:id() then
+		SendScriptCallback("actor_on_item_before_use", npc_gobj, item_gobj, flags)
+	else
+		SendScriptCallback("on_before_item_use", npc_gobj, item_gobj, flags)
+	end
+	
+	return flags.ret_value
+end
+
+-- Called before actor hit callback
+-- returning false will ignore the hit completely
+function CActor__BeforeHitCallback(actor, shit, bone_id)
+	local flags = { ret_value = true }
+	
+	SendScriptCallback("actor_on_before_hit", shit, bone_id, flags)
+	
+	return flags.ret_value
+end
+
+-- called in CSE_ALifeDynamicObject::on_unregister()
+-- good place to remove ids from persistent tables
+function CSE_ALifeDynamicObject_on_unregister(id)
+
+end
+
+function CALifeUpdateManager__on_before_change_level(packet)
+--[[
+	C++:
+	net_packet.r					(&graph().actor()->m_tGraphID,sizeof(graph().actor()->m_tGraphID));
+	net_packet.r					(&graph().actor()->m_tNodeID,sizeof(graph().actor()->m_tNodeID));
+	net_packet.r_vec3				(graph().actor()->o_Position);
+	net_packet.r_vec3				(graph().actor()->o_Angle);
+--]]
+
+	SendScriptCallback("on_before_level_changing", packet)
+
+end
+
+function CUIActorMenu_CanMoveToPartner(npc_gobj, item_gobj, zero_a, zero_b, itmWeight, partner_inv_weight, partner_max_weight)
+	local flags = { ret_value = true }
+	
+	SendScriptCallback("CUIActorMenu_CanMoveToPartner", npc_gobj, item_gobj, itmWeight, partner_inv_weight, partner_max_weight, flags)
+	
+	return flags.ret_value
+end
+
+--[[ called from engine! -- bugs
+function CInventoryBox_CanTake(box, item)
+	local flags = { ret_value = true }
+	
+	SendScriptCallback("CInventoryBox_CanTake", box, item, flags)
+	
+	return flags.ret_value
+end
+--]]
+
+-- called from engine!
+function CInventoryBox_OnInvBoxCanTakeItem(box, item)
+
+	local flags = { ret_value = true }
+
+	SendScriptCallback("CInventoryBox_OnInvBoxCanTakeItem", box, item, flags)
+
+	return flags.ret_value
+end
+
+-- called from engine!
+function CInventoryBox_OnInvBoxCanPlaceItem(box, item)
+
+	local flags = { ret_value = true }
+
+	SendScriptCallback("CInventoryBox_OnInvBoxCanPlaceItem", box, item, flags)
+
+	return flags.ret_value
+end
+
+-- called from engine!
+--[[
+ Refers to when an icon is dragged onto another icon in Actor Inventory Menu
+ 
+ passed parameters:
+	first_item is the object being dragged; may be nil
+	second_item is the object the item is being dragged onto; may be nil
+	from_slot is the number value of the slot first_item is being dragged from;  0 or EDDListType.iInvalid is invalid 
+	to_slot is the number value of the slot second_item is occupying;  0 or EDDListType.iInvalid is invalid 
+	
+from_slot and to_slot values:
+		EDDListType.iInvalid			= 0
+		EDDListType.iActorSlot			= 1
+		EDDListType.iActorBag			= 2
+		EDDListType.iActorBelt			= 3
+
+		EDDListType.iActorTrade			= 4
+		EDDListType.iPartnerTradeBag	= 5
+		EDDListType.iPartnerTrade		= 6
+		EDDListType.iDeadBodyBag		= 7
+		EDDListType.iQuickSlot			= 8
+		EDDListType.iTrashSlot			= 9
+		
+ex. if (to_slot == EDDListType.iActorSlot) then 
+		printf("dragging item to slot!")
+	end
+	
+--]]
+function CUIActorMenu_OnItemDropped(first_item, second_item, from_slot, to_slot)
+	if not db.actor then
+		return true;
+	end
+	
+	if (first_item and second_item) then
+		SendScriptCallback("CUIActorMenu_OnItemDropped", first_item, second_item, from_slot, to_slot)
+		SendScriptCallback("ActorMenu_on_item_drag_drop", first_item, second_item, from_slot, to_slot)
+	end
+	
+	if not first_item or not second_item or first_item:id() == second_item:id() then
+		SendScriptCallback("actor_on_nil_drag_drop_item_on_item", first_item, second_item, from_slot, to_slot)
+		
+		return true
+	end
+	
+	local actor_id = db.actor:id()
+	if (first_item:parent() and first_item:parent():id() and first_item:parent():id() ~= actor_id) or (second_item:parent() and second_item:parent():id() and second_item:parent():id() ~= actor_id) then
+		SendScriptCallback("actor_on_npc_drag_drop_item_on_item", first_item, second_item, from_slot, to_slot)
+	else
+		SendScriptCallback("actor_on_actor_drag_drop_item_on_item", first_item, second_item, from_slot, to_slot)
+	end
+	
+	return true
+end
+
+-- called from engine!
+function CUIActorMenu_OnItemFocusReceive(item_gobj)
+	SendScriptCallback("CUIActorMenu_OnItemFocusReceive", item_gobj)
+	SendScriptCallback("ActorMenu_on_item_focus_receive", item_gobj)
+end
+
+-- called from engine!
+function CUIActorMenu_OnItemFocusLost(item_gobj)
+	SendScriptCallback("CUIActorMenu_OnItemFocusLost", item_gobj)
+	SendScriptCallback("ActorMenu_on_item_focus_lost", item_gobj)
+end
+
+-- called from engine!
+-- useful for when doing npc:use(db.actor) when NPC is alive
+-- basically what is available in the corpse loot menu while npc is alive
+function CInventory_ItemAvailableToTrade(npc, item)
+	
+	local flags = { ret_value = true }
+	
+	SendScriptCallback("CInventory_ItemAvailableToTrade", npc, item, flags)
+	
+	return flags.ret_value
+end
+
+-- called from engine!
+function level_on_key_press(dik,bind)
+	if (level.present() and db.actor) then	
+		SendScriptCallback("level_input_on_key_press", dik, bind)
+	end
+	
+	return false
 end
