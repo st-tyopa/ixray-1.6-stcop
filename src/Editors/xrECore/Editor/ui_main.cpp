@@ -540,9 +540,7 @@ void TUI::Redraw()
 				g_bRendering = FALSE;
 				// 
 				ID3D11RenderTargetView* RTV = RSwapchainTarget;
-				 //  Draw(); 
-				   // end draw
-				xrCriticalSectionGuard guard(EDevice->Dx11Guard);
+				EDevice->Dx11Guard.Enter();
 				UI->BeginFrame();
 
 				Draw();
@@ -551,6 +549,7 @@ void TUI::Redraw()
 
 				RContext->OMSetRenderTargets(1, &RTV, 0);
 				UI->EndFrame();
+				EDevice->Dx11Guard.Leave();
 				EDevice->End();
 				UI->MDIUpdate();
 			}
