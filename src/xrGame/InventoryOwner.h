@@ -183,6 +183,7 @@ public:
 	CCustomOutfit* GetOutfit() const;
 	CHelmet* GetHelmet() const;
 	CBackpack* GetBackpack() const;
+	CRig* GetRig() const;
 
 	bool CanPlayShHdRldSounds() const { return m_play_show_hide_reload_sounds; };
 	void SetPlayShHdRldSounds(bool play) { m_play_show_hide_reload_sounds = play; };
@@ -222,6 +223,7 @@ public:
 	virtual void OnItemBelt(CInventoryItem* inventory_item, const SInvItemPlace& previous_place);
 	virtual void OnItemRuck(CInventoryItem* inventory_item, const SInvItemPlace& previous_place);
 	virtual void OnItemSlot(CInventoryItem* inventory_item, const SInvItemPlace& previous_place);
+	virtual void OnItemRig(CInventoryItem* inventory_item, const SInvItemPlace& previous_place);
 
 	virtual void OnItemDrop(CInventoryItem* inventory_item, bool just_before_destroy);
 	virtual void OnItemDropUpdate() {}

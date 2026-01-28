@@ -1,3 +1,4 @@
+#include "ActorRig.h"
 #include "StdAfx.h"
 #include "UIActorMenu.h"
 #include "../Inventory.h"
@@ -53,6 +54,7 @@ void CUIActorMenu::InitInventoryMode()
 	UpdateSortButtons();
 
 	m_pInventoryBagList->Show(true);
+	m_pInventoryRigList->Show(true);
 	m_pInventoryBeltList->Show(true);
 
 	for (u8 i = 1; i <= m_slot_count; ++i)
@@ -131,6 +133,22 @@ void CUIActorMenu::SendEvent_Item2Ruck(PIItem pItem, u16 recipient)
 	clear_highlight_lists			();
 
 	PlaySnd							(eItemToRuck);
+};
+
+void CUIActorMenu::SendEvent_Item2Rig(PIItem pItem, u16 recipient)
+{
+	if(pItem->parent_id()!=recipient)
+	{
+		move_item_from_to			(pItem->parent_id(), recipient, pItem->object_id());	
+	}
+
+	NET_Packet						P;
+	CGameObject::u_EventGen			(P, GEG_PLAYER_ITEM2RIG, pItem->object().H_Parent()->ID());
+	P.w_u16							(pItem->object().ID());
+	CGameObject::u_EventSend		(P);
+	clear_highlight_lists			();
+
+	PlaySnd							(eItemToRig);
 };
 
 void CUIActorMenu::SendEvent_Item_Eat(PIItem pItem, u16 recipient)
@@ -287,6 +305,7 @@ void CUIActorMenu::OnInventoryAction(PIItem pItem, u16 action_type)
 	{
 		m_pInventoryBeltList,
 		m_pInventoryBagList,
+		m_pInventoryRigList,
 		m_pTradeActorBagList,
 		m_pTradeActorList,
 		nullptr
@@ -827,6 +846,64 @@ bool CUIActorMenu::ToBag(CUICellItem* itm, bool b_use_cursor_pos)
 
 		if(!b_already || !b_own_item)
 			SendEvent_Item2Ruck					(iitem, m_pActorInvOwner->object_id());
+
+		if ( m_currMenuMode == mmTrade && m_pPartnerInvOwner )
+		{
+			ColorizeItem( itm, !CanMoveToPartner( iitem ) );
+		}
+		return true;
+	}
+	return false;
+}
+
+bool CUIActorMenu::ToRig(CUICellItem* itm, bool b_use_cursor_pos)
+{
+	PIItem	iitem						= (PIItem)itm->m_pData;
+
+	bool b_own_item						= (iitem->parent_id()==m_pActorInvOwner->object_id());
+
+	bool b_already						= m_pActorInvOwner->inventory().InRig(iitem);
+
+	CUIDragDropListEx*	old_owner		= itm->OwnerList();
+	CUIDragDropListEx*	new_owner		= nullptr;
+	if (b_use_cursor_pos)
+	{
+		new_owner					= CUIDragDropListEx::m_drag_item->BackList();
+		VERIFY						(GetListType(new_owner)==iActorRig);
+	}
+	else
+	{
+		new_owner					= GetListByType(iActorRig);
+	}
+	
+	if(m_pActorInvOwner->inventory().CanPutInRig(iitem) || (b_already && (new_owner!=old_owner)) )
+	{
+		// Pavel: если предмет в iActorTrade, то он уже должен находиться в рюкзаке
+		// Проверка нужна для того, чтобы не сбрасывалась граната в МП,
+		// при перекладывании из iActorTrade
+		if (GetListType(old_owner) != iActorRig)
+		{
+			bool result = b_already || (!b_own_item || m_pActorInvOwner->inventory().Rig(iitem));
+			R_ASSERT(result);
+		}
+
+		CUICellItem* i						= old_owner->RemoveItem(itm, (old_owner==new_owner) );
+		if (!i)
+		{
+			return false;	
+		}
+
+		if(b_use_cursor_pos)
+		{
+			new_owner->SetItem				(i,old_owner->GetDragItemPosition());	
+		}
+		else
+		{
+			new_owner->SetItem				(i);
+		}
+
+		if(!b_already || !b_own_item)
+			SendEvent_Item2Rig					(iitem, m_pActorInvOwner->object_id());
 
 		if ( m_currMenuMode == mmTrade && m_pPartnerInvOwner )
 		{
@@ -1837,6 +1914,40 @@ void CUIActorMenu::UpdateOutfit()
 		m_belt_list_over[i]->SetVisible( false );
 	}
 }
+
+void CUIActorMenu::UpdateRig()
+{
+	CRig* rig = m_pActorInvOwner->GetRig();
+	if ( !rig )
+	{
+		while ( m_pInventoryRigList->ItemsCount() )
+		{
+			CUICellItem* ci = m_pInventoryRigList->GetItemIdx(0);
+			VERIFY( ci && ci->m_pData );
+			ToBag( ci, false );
+		}//for while
+		m_pInventoryRigList->ClearAll(true);
+		return;
+	}
+	if (m_pInventoryRigList->ItemsCount() == 0)
+	{
+		Ivector2 capacity;
+		capacity.x = rig->m_rig_width; //m_pInventoryRigList->CellsCapacity().x; // rig->m_rig_width;
+		capacity.y = rig->m_rig_height; //m_pInventoryRigList->CellsCapacity().y; // rig->m_rig_height;
+		m_pInventoryRigList->SetCellsCapacity(capacity);
+		
+		TIItemContainer::iterator itb = m_pActorInvOwner->inventory().m_rig.begin();
+		TIItemContainer::iterator ite = m_pActorInvOwner->inventory().m_rig.end();
+		for ( ; itb != ite; ++itb )
+		{
+			CUICellItem* itm		= create_cell_item(*itb);
+			m_pInventoryRigList->SetItem		(itm);
+			if ( m_currMenuMode == mmTrade && m_pPartnerInvOwner )
+				ColorizeItem( itm, !CanMoveToPartner( *itb ) );
+		}
+	}
+}
+
 
 void CUIActorMenu::MoveArtefactsToBag()
 {

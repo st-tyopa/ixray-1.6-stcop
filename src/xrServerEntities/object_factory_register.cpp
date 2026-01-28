@@ -189,6 +189,7 @@
 
 #	include "../xrGame/HolderEntityObject.h"
 #	include "../xrGame/ActorBackpack.h"
+#	include "../xrGame/ActorRig.h"
 #	include "../xrGame/InventoryItems/Dosimeter/Dosimeter.h"
 #endif // NO_XR_GAME
 
@@ -290,6 +291,7 @@ void CObjectFactory::register_classes	()
 #endif // #ifndef NO_SINGLE
 
 	ADD(CBackpack, CSE_ALifeItem, CLSID_EQUIPMENT_BACKPACK, "equ_backpack");
+	ADD(CRig, CSE_ALifeItem, CLSID_EQUIPMENT_RIG, "equ_rig");
 
 	// Artefacts
 	ADD(CMercuryBall			,CSE_ALifeItemArtefact			,CLSID_AF_MERCURY_BALL			,"art_mercury_ball");

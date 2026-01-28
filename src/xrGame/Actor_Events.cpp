@@ -195,6 +195,7 @@ void CActor::OnEvent(NET_Packet& P, u16 type)
 	case GEG_PLAYER_ITEM2SLOT:
 	case GEG_PLAYER_ITEM2BELT:
 	case GEG_PLAYER_ITEM2RUCK:
+	case GEG_PLAYER_ITEM2RIG:
 	case GEG_PLAYER_ITEM_EAT:
 	case GEG_PLAYER_ACTIVATEARTEFACT:
 {
@@ -251,6 +252,9 @@ void CActor::OnEvent(NET_Packet& P, u16 type)
 				break;//2
 			case GEG_PLAYER_ITEM2RUCK:	 
 				inventory().Ruck( iitem ); 
+				break;//2
+			case GEG_PLAYER_ITEM2RIG:	 
+				inventory().Rig( iitem ); 
 				break;//2
 			case GEG_PLAYER_ITEM_EAT:	 
 				inventory().Eat( iitem ); 

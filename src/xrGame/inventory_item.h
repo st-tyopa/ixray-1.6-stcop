@@ -50,6 +50,7 @@ class CGrenade;
 class CSilencer;
 class CScope;
 class CGrenadeLauncher;
+class CRig;
 struct SPHNetState;
 struct net_update_IItem;
 
@@ -205,6 +206,7 @@ public:
 	virtual void OnMoveToSlot(const SInvItemPlace& prev) {};
 	virtual void OnMoveToBelt(const SInvItemPlace& prev) {};
 	virtual void OnMoveToRuck(const SInvItemPlace& prev) {};
+	virtual void OnMoveToRig(const SInvItemPlace& prev) {};
 
 	Irect GetInvGridRect() const;
 	void SetInvGridRect(const Irect& rect);
@@ -347,6 +349,7 @@ public:
 	virtual CGrenadeLauncher* cast_addon_grenade_launcher() { return nullptr; }
 	virtual CPhysicItem* cast_physics_item() { return nullptr; }
 	virtual CBackpack* cast_backpack() { return nullptr; }
+	virtual CRig* cast_rig() { return nullptr; }
 	virtual CWeaponShotgun* cast_weapon_shotgun() { return nullptr; }
 
 	////////// upgrades //////////////////////////////////////////////////

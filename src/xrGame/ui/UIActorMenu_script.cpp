@@ -124,6 +124,9 @@ void CUIActorMenu::HighlightForEachInSlot(const luabind::functor<bool>& functor,
 	case EDDListType::iActorBelt:
 		slot_list = m_pInventoryBeltList;
 		break;
+	case EDDListType::iActorRig:
+		slot_list = m_pInventoryRigList;
+		break;
 	case EDDListType::iActorSlot:
 		slot_list = GetSlotList(slot_id);
 		break;
@@ -375,6 +378,9 @@ void CUIActorMenu::HighlightSectionInSlot(LPCSTR section, u8 type, u16 slot_id)
 	case EDDListType::iActorBelt:
 		slot_list = m_pInventoryBeltList;
 		break;
+	case EDDListType::iActorRig:
+		slot_list = m_pInventoryRigList;
+		break;
 	case EDDListType::iActorSlot:
 		slot_list = GetSlotList(slot_id);
 		break;
@@ -464,6 +470,7 @@ void CUIActorMenu::script_register(lua_State *L)
 			[
 				value("iActorBag", int(EDDListType::iActorBag)),
 				value("iActorBelt", int(EDDListType::iActorBelt)),
+				value("iActorRig", int(EDDListType::iActorRig)),
 				value("iActorSlot", int(EDDListType::iActorSlot)),
 				value("iActorTrade", int(EDDListType::iActorTrade)),
 				value("iDeadBodyBag", int(EDDListType::iDeadBodyBag)),

@@ -19,8 +19,10 @@ enum
 	ARTEFACT_SLOT,	// artefact
 	HELMET_SLOT,
 	BACKPACK_SLOT,
+	RIG_SLOT,
 
 	PISTOL_SLOT_NEW,
+
 
 	CUSTOM_SLOT_1,
 	CUSTOM_SLOT_2,
@@ -49,7 +51,8 @@ enum eItemPlace
 	eItemPlaceUndefined = 0,
 	eItemPlaceSlot,
 	eItemPlaceBelt,
-	eItemPlaceRuck
+	eItemPlaceRuck,
+	eItemPlaceRig
 };
 
 struct SInvItemPlace

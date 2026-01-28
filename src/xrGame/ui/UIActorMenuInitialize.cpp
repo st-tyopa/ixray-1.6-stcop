@@ -177,6 +177,14 @@ void CUIActorMenu::Construct()
 	}
 	uiXml.SetLocalRoot(stored_root);
 
+	/*
+	 * todo: st_tyopa uncomment and finalize eft like item zone
+	CUIScrollView* pScrollView = new CUIScrollView();
+	CUIXmlInit::InitScrollView(uiXml, "actor_scroll", 0, pScrollView);
+	AttachChild(pScrollView);
+	*/
+	
+	m_pInventoryRigList			= UIHelperGame::CreateDragDropListEx(uiXml, "dragdrop_rig", this);
 	m_pInventoryBagList			= UIHelperGame::CreateDragDropListEx(uiXml, "dragdrop_bag", this);
 	m_pInventoryBeltList		= UIHelperGame::CreateDragDropListEx(uiXml, "dragdrop_belt", this);
 
@@ -440,6 +448,7 @@ void CUIActorMenu::Construct()
 
 	BindDragDropListEvents(m_pInventoryBeltList);
 	BindDragDropListEvents(m_pInventoryBagList);
+	BindDragDropListEvents(m_pInventoryRigList);
 	BindDragDropListEvents(m_pTradeActorBagList);
 	BindDragDropListEvents(m_pTradeActorList);
 	BindDragDropListEvents(m_pTradePartnerBagList);
@@ -463,7 +472,10 @@ void CUIActorMenu::Construct()
 	m_allowed_drops[iActorBag].push_back(iActorTrade);
 	m_allowed_drops[iActorBag].push_back(iDeadBodyBag);
 	m_allowed_drops[iActorBag].push_back(iActorBag);
+	m_allowed_drops[iActorBag].push_back(iActorRig);
 	m_allowed_drops[iActorBag].push_back(iQuickSlot);
+	
+	m_allowed_drops[iActorRig].push_back(iActorBag);
 	
 	m_allowed_drops[iActorBelt].push_back(iActorBag);
 	m_allowed_drops[iActorBelt].push_back(iActorTrade);

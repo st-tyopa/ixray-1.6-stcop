@@ -2223,6 +2223,8 @@ int CWeapon::GetAmmoCount_forType( shared_str const& ammo_type ) const
 {
 	int res = 0;
 
+	/*
+	 * // todo: st.tyopa switch behavior based on feature flag  
 	for (PIItem item : m_pInventory->m_belt)
 	{
 		CWeaponAmmo* pAmmo = item->cast_weapon_ammo();
@@ -2233,6 +2235,15 @@ int CWeapon::GetAmmoCount_forType( shared_str const& ammo_type ) const
 	}
 
 	for (PIItem item : m_pInventory->m_ruck)
+	{
+		CWeaponAmmo* pAmmo = item->cast_weapon_ammo();
+		if (pAmmo && pAmmo->cNameSect() == ammo_type)
+		{
+			res += pAmmo->m_boxCurr;
+		}
+	}
+	*/
+	for (PIItem item : m_pInventory->m_rig)
 	{
 		CWeaponAmmo* pAmmo = item->cast_weapon_ammo();
 		if (pAmmo && pAmmo->cNameSect() == ammo_type)

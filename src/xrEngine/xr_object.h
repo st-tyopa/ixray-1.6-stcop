@@ -64,6 +64,7 @@ class CGrenade;
 class CCreature;
 class CPhraseDialogManager;
 class CBackpack;
+class CRig;
 class CClimableObject;
 class CPhysicObject;
 class CTeamBaseZone;
@@ -245,6 +246,7 @@ public:
 	virtual CCreature* cast_creature() { return nullptr; }
 	virtual CPhraseDialogManager* cast_phrase_dialog_manager() { return nullptr; }
 	virtual CBackpack* cast_backpack() { return nullptr; }
+	virtual CRig* cast_rig() { return nullptr; }
 	virtual CClimableObject* cast_climable_object() { return nullptr; }
 	virtual CPhysicObject* cast_physics_object() { return nullptr; }
 	virtual CTeamBaseZone* cast_team_base_zone() { return nullptr; }

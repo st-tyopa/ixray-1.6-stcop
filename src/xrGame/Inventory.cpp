@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "pch_script.h"
 #include "Inventory.h"
+
+#include "ActorRig.h"
 #include "ui/UIActorMenu.h"
 #include "ui/UIInventoryUtilities.h"
 #include "UIGameCustom.h"
@@ -34,6 +36,7 @@ bool defaultSlotActive[] =
 	false,		// helmet
 	false,		// backpack
 	false,		// pistol (new)
+	false,		// rig
 	false,		// custom 1
 	false,		// custom 2
 	false,		// custom 3
@@ -63,6 +66,7 @@ bool defaultSlotPersistent[] =
 	false,		// helmet
 	true,		// backpack
 	true,		// pistol (new)
+	true,		// rig
 	true,		// custom 1
 	true,		// custom 2
 	true,		// custom 3
@@ -105,7 +109,6 @@ CInventory::CInventory()
 		m_iMaxBelt = pSettings->r_s32("inventory", "max_belt");
 	}
 
-
 	InitPriorityGroupsForQSwitch();
 	LoadCallbackGlobals(m_isItemAvailableToTrade, m_onItemAvailableToTrade, "OnItemAvailableToTrade");
 	LoadCallbackGlobals(m_isInventoryEat, m_onInventoryEat, "OnInventoryEat");
@@ -116,6 +119,7 @@ void CInventory::Clear()
 	m_all.clear();
 	m_ruck.clear();
 	m_belt.clear();
+	m_rig.clear();
 
 	for (u16 i = FirstSlot(); i <= LastSlot(); i++)
 	{
@@ -558,6 +562,11 @@ bool CInventory::Ruck(PIItem pIItem, bool strict_placement)
 		{
 			m_belt.erase(it);
 		}
+		it = std::find(m_rig.begin(), m_rig.end(), pIItem);
+		if (m_rig.end() != it)
+		{
+			m_rig.erase(it);
+		}
 
 		if (!IsGameTypeSingle())
 		{
@@ -587,6 +596,54 @@ bool CInventory::Ruck(PIItem pIItem, bool strict_placement)
 	{
 		pIItem->object().processing_deactivate();
 	}
+
+	return true;
+}
+
+bool CInventory::Rig(PIItem pIItem, bool strict_placement)
+{
+	if (!strict_placement && !CanPutInRig(pIItem))
+	{
+		return false;
+	}
+
+	//вещь была в слоте
+	bool in_slot = InSlot(pIItem);
+	if (in_slot)
+	{
+		if (GetActiveSlot() == pIItem->CurrSlot())
+		{
+			Activate(NO_ACTIVE_SLOT);
+		}
+
+		m_slots[pIItem->CurrSlot()].m_pIItem = nullptr;
+	}
+
+	m_rig.insert(m_rig.end(), pIItem);
+
+	if (!in_slot)
+	{
+		TIItemContainer::iterator it = std::find(m_ruck.begin(), m_ruck.end(), pIItem);
+		if (m_ruck.end() != it)
+		{
+			m_ruck.erase(it);
+		}
+	}
+
+	CalcTotalWeight();
+	InvalidateState();
+
+	SInvItemPlace p = pIItem->m_ItemCurrPlace;
+	pIItem->m_ItemCurrPlace.type = eItemPlaceRig;
+	m_pOwner->OnItemRig(pIItem, p);
+	pIItem->OnMoveToRig(p);
+
+	if (in_slot)
+	{
+		pIItem->object().processing_deactivate();
+	}
+
+	pIItem->object().processing_activate();
 
 	return true;
 }
@@ -1021,7 +1078,9 @@ void CInventory::UpdateDropItem(PIItem pIItem)
 //ищем на поясе гранату такоже типа
 PIItem CInventory::Same(const PIItem pIItem, bool bSearchRuck) const
 {
-	const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	// todo: st.tyopa switch behavior based on feature flag 
+	// const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	const TIItemContainer& list = m_rig;
 
 	for (const PIItem item : list)
 	{
@@ -1042,8 +1101,10 @@ PIItem CInventory::SameSlot(const u16 slot, PIItem pIItem, bool bSearchRuck) con
 	{
 		return nullptr;
 	}
-
-	const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	
+	// todo: st.tyopa switch behavior based on feature flag 
+	//const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	const TIItemContainer& list = m_rig;
 
 	for (const PIItem item : list)
 	{
@@ -1059,7 +1120,9 @@ PIItem CInventory::SameSlot(const u16 slot, PIItem pIItem, bool bSearchRuck) con
 //найти в инвенторе вещь с указанным именем
 PIItem CInventory::Get(LPCSTR name, bool bSearchRuck) const
 {
-	const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	// todo: st.tyopa switch behavior based on feature flag 
+	//const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	const TIItemContainer& list = m_rig;
 
 	for (const PIItem item : list)
 	{
@@ -1074,7 +1137,9 @@ PIItem CInventory::Get(LPCSTR name, bool bSearchRuck) const
 
 PIItem CInventory::Get(CLASS_ID cls_id, bool bSearchRuck) const
 {
-	const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	// todo: st.tyopa switch behavior based on feature flag 
+	//const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	const TIItemContainer& list = m_rig;
 
 	for (const PIItem item : list)
 	{
@@ -1089,7 +1154,9 @@ PIItem CInventory::Get(CLASS_ID cls_id, bool bSearchRuck) const
 
 PIItem CInventory::Get(const u16 id, bool bSearchRuck) const
 {
-	const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	// todo: st.tyopa switch behavior based on feature flag  
+	// const TIItemContainer& list = bSearchRuck ? m_ruck : m_belt;
+	const TIItemContainer& list = m_rig;
 
 	for (const PIItem item : list)
 	{
@@ -1097,8 +1164,7 @@ PIItem CInventory::Get(const u16 id, bool bSearchRuck) const
 		{
 			return item;
 		}
-	}
-
+	} 
 	return nullptr;
 }
 
@@ -1140,7 +1206,15 @@ float CInventory::CalcTotalWeight()
 	float weight = 0.0f;
 	for (const PIItem item : m_all)
 	{
-		weight += item->Weight();
+		if (item->m_ItemCurrPlace.type == eItemPlaceRig)
+		{
+			// todo: st.tyopa rig system -> read percent from section 
+			weight += item->Weight() * 0.5f;
+		}
+		else
+		{
+			weight += item->Weight();	
+		}
 	}
 
 	m_fTotalWeight = weight;
@@ -1363,6 +1437,11 @@ bool CInventory::InRuck(const CInventoryItem* pIItem) const
 	return pIItem->CurrPlace() == eItemPlaceRuck;
 }
 
+bool CInventory::InRig(const CInventoryItem* pIItem) const
+{
+	return pIItem->CurrPlace() == eItemPlaceRig;
+}
+
 bool CInventory::CanPutInSlot(PIItem pIItem, u16 slot_id) const
 {
 	if (!m_bSlotsUseful)
@@ -1423,6 +1502,23 @@ bool CInventory::CanPutInBelt(PIItem pIItem)
 bool CInventory::CanPutInRuck(PIItem pIItem) const
 {
 	return !InRuck(pIItem);
+}
+
+bool CInventory::CanPutInRig(PIItem pIItem)
+{
+	if (InRig(pIItem))
+	{
+		return false;
+	}
+	CActor* pActor = m_pOwner->cast_actor();
+	if (pActor != nullptr)
+	{
+		if (CRig* rig = pActor->GetRig())
+		{
+			return FreeRoom_inBelt(m_rig, pIItem, rig->m_rig_width, rig->m_rig_height);
+		}
+	}
+	return false;
 }
 
 u32	CInventory::dwfGetObjectCount()

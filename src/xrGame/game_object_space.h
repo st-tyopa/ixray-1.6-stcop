@@ -71,6 +71,7 @@ namespace GameObject {
 		eItemToBelt,
 		eItemToSlot,
 		eItemToRuck,
+		eItemToRig,
 		eOnFootStep,
 
 		eAttachVehicle,

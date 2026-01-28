@@ -156,6 +156,10 @@ bool CUIActorMenu::OnItemDrop(CUICellItem* itm)
 		{
 			ToBelt	(itm, true);
 		}break;
+	case iActorRig:
+		{
+			ToRig    (itm, false);
+		}break;
 	case iActorTrade:
 		{
 			ToActorTrade(itm, true);
@@ -251,33 +255,43 @@ bool CUIActorMenu::OnItemDbClick(CUICellItem* itm)
 			{
 				ToActorTrade( itm, false );
 				break;
-			}else
-				if ( m_currMenuMode == mmDeadBodySearch )
-				{
-					ToDeadBodyBag( itm, false );
-					break;
-				}
-				if(m_currMenuMode!=mmUpgrade && TryUseItem( itm ))
-				{
-					break;
-				}
-				if ( TryActiveSlot( itm ) )
-				{
-					break;
-				}
-				PIItem iitem_to_place = (PIItem)itm->m_pData;
-				if ( !ToSlot( itm, false, iitem_to_place->BaseSlot() ) )
-				{
-					if ( !ToBelt( itm, false ) )
-					{
-						ToSlot( itm, true, iitem_to_place->BaseSlot() );
-					}
-				}
+			}
+			if ( m_currMenuMode == mmDeadBodySearch )
+			{
+				ToDeadBodyBag( itm, false );
 				break;
+			}
+			if(m_currMenuMode!=mmUpgrade && TryUseItem( itm ))
+			{
+				break;
+			}
+			PIItem iitem_to_place = (PIItem)itm->m_pData;
+			if (iitem_to_place->cast_weapon_ammo() || iitem_to_place->cast_grenade())
+			{
+				ToRig(itm, false);
+				break;
+			}
+			if ( TryActiveSlot( itm ) )
+			{
+				break;
+			}
+			if ( !ToSlot( itm, false, iitem_to_place->BaseSlot() ) )
+			{
+				if ( !ToBelt( itm, false ) )
+				{
+					ToSlot( itm, true, iitem_to_place->BaseSlot() );
+				}
+			}
+			break;
 		}
 	case iActorBelt:
 		{
 			ToBag( itm, false );
+			break;
+		}
+	case iActorRig:
+		{
+			ToBag(itm, false );
 			break;
 		}
 	case iActorTrade:

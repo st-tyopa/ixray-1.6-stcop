@@ -236,6 +236,7 @@
 #define CLSID_ONLINE_OFFLINE_GROUP		MK_CLSID('O','N','_','O','F','F','_','G')
 
 #define CLSID_EQUIPMENT_BACKPACK MK_CLSID('E', 'Q', '_', 'B', 'A', 'K', 'P', 'K')
+#define CLSID_EQUIPMENT_RIG MK_CLSID('E', 'Q', 'U', 'I', 'P', '_', 'R', 'G')
 
 
 #define CLSID_SMART_TERRAIN				MK_CLSID('S','M','R','T','T','R','R','N')

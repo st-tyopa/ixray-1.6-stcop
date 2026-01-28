@@ -574,6 +574,13 @@ void CInventoryOwner::OnItemSlot(CInventoryItem* inventory_item, const SInvItemP
 	attach(inventory_item);
 }
 
+void CInventoryOwner::OnItemRig(CInventoryItem* inventory_item, const SInvItemPlace& previous_place)
+{
+	CGameObject* object = cast_game_object();
+	VERIFY(object);
+	object->callback(GameObject::eItemToRig)(inventory_item->object().lua_game_object());
+}
+
 CCustomOutfit* CInventoryOwner::GetOutfit() const
 {
 	PIItem item_from_slot = inventory().ItemFromSlot(OUTFIT_SLOT);
@@ -590,6 +597,12 @@ CBackpack* CInventoryOwner::GetBackpack() const
 {
 	PIItem item_from_slot = inventory().ItemFromSlot(BACKPACK_SLOT);
 	return item_from_slot != nullptr ? item_from_slot->cast_backpack() : nullptr;
+}
+
+CRig* CInventoryOwner::GetRig() const
+{
+	PIItem item_from_slot = inventory().ItemFromSlot(RIG_SLOT);
+	return item_from_slot != nullptr ? item_from_slot->cast_rig() : nullptr;
 }
 
 

@@ -51,14 +51,17 @@ public:
 	bool Slot(u16 slot_id, PIItem pIItem, bool bNotActivate = false, bool strict_placement = false);
 	bool Belt(PIItem pIItem, bool strict_placement = false);
 	bool Ruck(PIItem pIItem, bool strict_placement = false);
+	bool Rig(PIItem pIItem, bool strict_placement = false);
 
 	bool InSlot(const CInventoryItem* pIItem) const;
 	bool InBelt(const CInventoryItem* pIItem) const;
 	bool InRuck(const CInventoryItem* pIItem) const;
+	bool InRig(const CInventoryItem* pIItem) const;
 
 	bool CanPutInSlot(PIItem pIItem, u16 slot_id) const;
 	bool CanPutInBelt(PIItem pIItem);
 	bool CanPutInRuck(PIItem pIItem) const;
+	bool CanPutInRig(PIItem pIItem);
 
 	bool CanTakeItem(CInventoryItem* inventory_item) const;
 
@@ -129,7 +132,7 @@ public:
 	bool IsSlotBlocked(PIItem const iitem) const;
 
 	TIItemContainer	m_all = {};
-	TIItemContainer m_ruck = {}, m_belt = {};
+	TIItemContainer m_ruck = {}, m_belt = {}, m_rig = {};
 	TIItemContainer m_activ_last_items = {};
 
 	TISlotArr m_slots = {};

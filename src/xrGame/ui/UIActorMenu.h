@@ -36,6 +36,7 @@ namespace inventory { namespace upgrade {
 enum EDDListType{
 		iInvalid,
 		iActorSlot,
+		iActorRig,
 		iActorBag,
 		iActorBelt,
 
@@ -68,6 +69,7 @@ protected:
 								eItemToSlot,
 								eItemToBelt,
 								eItemToRuck,
+								eItemToRig,
 								eProperties,
 								eDropItem,
 								eAttachAddon,
@@ -93,6 +95,7 @@ protected:
 
 	CUIDragDropListEx*			m_pInventoryBeltList;
 	CUIDragDropListEx*			m_pInventoryBagList;
+	CUIDragDropListEx*			m_pInventoryRigList;
 
 	CUIDragDropListEx*			m_pTradeActorBagList;
 	CUIDragDropListEx*			m_pTradeActorList;
@@ -321,6 +324,7 @@ protected:
 	bool						ToSlotScript				(CScriptGameObject* GO, bool force_place, u16 slot_id);
 	bool						ToSlot						(CUICellItem* itm, bool force_place, u16 slot_id);
 	bool						ToBag						(CUICellItem* itm, bool b_use_cursor_pos);
+	bool						ToRig						(CUICellItem* itm, bool b_use_cursor_pos);
 	bool						ToBeltScript				(CScriptGameObject* GO, bool b_use_cursor_pos);
 	bool						ToBelt						(CUICellItem* itm, bool b_use_cursor_pos);
 	bool						TryUseItem					(CUICellItem* cell_itm);
@@ -329,6 +333,7 @@ protected:
 	void						SetActorInfoMP();
 	void						UpdateActorMoneyMP();
 	void						UpdateOutfit				();
+	void						UpdateRig					();
 	void						MoveArtefactsToBag			();
 	bool						TryActiveSlot				(CUICellItem* itm);
 	void						TryRepairItem				(CUIWindow* w, void* d);
@@ -352,6 +357,7 @@ protected:
 	void						SendEvent_Item2Slot			(PIItem	pItem, u16 parent, u16 slot_id);
 	void						SendEvent_Item2Belt			(PIItem	pItem, u16 parent);
 	void						SendEvent_Item2Ruck			(PIItem	pItem, u16 parent);
+	void						SendEvent_Item2Rig			(PIItem	pItem, u16 parent);
 	void						SendEvent_Item_Drop			(PIItem	pItem, u16 parent);
 	void						SendEvent_Item_Eat			(PIItem	pItem, u16 parent);
 	void						SendEvent_ActivateSlot		(u16 slot, u16 recipient);
