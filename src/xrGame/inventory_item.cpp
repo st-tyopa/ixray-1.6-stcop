@@ -175,6 +175,7 @@ void CInventoryItem::Load(LPCSTR section)
 	m_inv_rect.set(inv_grid_x, inv_grid_y, inv_grid_width, inv_grid_height);
 
 	ReadCustomTextAndMarks(section);
+	Read3dStaticsData(section);
 }
 
 void CInventoryItem::SetAdditionalDescription(LPCSTR additionalDescription)
@@ -213,6 +214,16 @@ void CInventoryItem::ReadCustomTextAndMarks(LPCSTR section)
 	m_custom_mark_offset = READ_IF_EXISTS(pSettings, r_fvector2, section, "item_custom_mark_offset", Fvector2().set(0.f, 0.f));
 	m_custom_mark_size = READ_IF_EXISTS(pSettings, r_fvector2, section, "item_custom_mark_size", Fvector2().set(0.f, 0.f));
 	m_custom_mark_clr = READ_IF_EXISTS(pSettings, r_color, section, "item_custom_mark_clr", 0);
+}
+
+void CInventoryItem::Read3dStaticsData(LPCSTR section)
+{
+	m_3d_static_visual_name = READ_IF_EXISTS(pSettings, r_string, section, "3d_static_visual_name", *object().cNameVisual());
+
+	m_3d_static_rotate = READ_IF_EXISTS(pSettings, r_fvector3, section, "3d_static_rotate", m_3d_static_rotate.set(0,0,0));
+	m_3d_static_rotate.mul(M_PI / 180.0f);
+
+	m_3d_static_scale = READ_IF_EXISTS(pSettings, r_float, section, "3d_static_scale", 1.f);
 }
 
 void CInventoryItem::RefreshTranslations()

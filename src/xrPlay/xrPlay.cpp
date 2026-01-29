@@ -89,7 +89,7 @@ int APIENTRY WinMain
 		return -1;
 	}
 
-	std::jthread s(splash::Show);
+	//std::jthread s(splash::Show); //
 
 	splash::SetProgressStatus(5, "Initializing debugger");
 	Debug._initialize(false);
@@ -116,12 +116,13 @@ int APIENTRY WinMain
 	splash::SetProgressStatus(10, "Calculating display modes");
 	EnumerateDisplayModes();
 
-	g_AppInfo.Window = SDL_CreateWindow("IX-Ray Engine", 0, 0, 0);
-	SDL_HideWindow(g_AppInfo.Window);
+	g_AppInfo.Window = SDL_CreateWindow("IX-Ray Engine", 0, 0, SDL_WINDOW_HIDDEN);
+	//SDL_HideWindow(g_AppInfo.Window);
 
 	splash::SetProgressStatus(20, "Initializing xrCore");
 	EngineLoadStage1(lpCmdLine);
-
+	//plat
+	std::jthread s(splash::Show);
 #ifdef DEBUG_DRAW
 	xrLogger::EnableFastDebugLog();
 #endif

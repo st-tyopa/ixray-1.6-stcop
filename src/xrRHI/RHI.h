@@ -41,7 +41,6 @@ enum
 	rsStatistic = (1ul << 5ul),
 	rsDetails = (1ul << 6ul),
 	rsRefresh60hz = (1ul << 7ul),
-	rsConstantFPS = (1ul << 8ul),
 	rsDrawStatic = (1ul << 9ul),
 	rsDrawDynamic = (1ul << 10ul),
 	rsDisableObjectsAsCrows = (1ul << 11ul),
@@ -137,6 +136,9 @@ public:
 		const void* srcData, size_t srcSize, const char* sourceName, const void* defines, void* include,
 		const char* entryPoint, const char* target, u32 flags1, u32 flags2, void** code, void** errors
 	);
+
+	void EvictManagedResources();
+
 public:
 	IRHIDevice* DevicePtr = nullptr;
 	IRHIShaderResourceStateCache* ShaderResourceCache = nullptr;

@@ -6,40 +6,43 @@ class IRenderVisual;
 class UI_API CUI3dStatic : 
     public CUIStatic
 {
-    typedef CUIStatic inherited;
+	typedef CUIStatic inherited;
 
 public:
 
-    CUI3dStatic();
-    virtual ~CUI3dStatic();
+					CUI3dStatic		();
+	virtual			~CUI3dStatic	();
 
-    IC void SetXYZ(Fvector& _xyz) 
-    {
-        rotate_matrix.setXYZ(_xyz);
-    }
+	IC void			SetXYZ			(Fvector& _xyz) { mRotate.setXYZ(_xyz); }
+	IC void			SetXYZ			(float x, float y, float z) { mRotate.setXYZ(x, y, z); }
+	
+	IC void			SetHPB			(Fvector& _hpb) { mRotate.setHPB(_hpb.x, _hpb.y, _hpb.z); }
+	IC void			SetHPB			(float h, float p, float b) { mRotate.setHPB(h, p, b); }
 
-    IC void SetXYZ(float x, float y, float z) 
-    {
-        rotate_matrix.setXYZ(x, y, z);
-    }
+	Fvector			GetXYZ			() const;
+	Fvector			GetHPB			() const;
 
-    Fvector GetXYZ() const;
+			void	SetVisual		(IRenderVisual* pVisual);
+			void	SetVisual		(const shared_str& cVisualName);
 
-    void SetVisual(IRenderVisual* pVisual);
-    virtual void Draw();
+	virtual void	Draw			();
 
-    float ScaleFactor = 1.0f;
+			void	SetScaleFactor	(float fScale) { fScaleFactor = fScale; }
+			float	GetScaleFactor	() { return fScaleFactor;  }
+
+	IRenderVisual*	GetVisual		() { return pCurrentVisual; }
 
 protected:
 
-    Fmatrix rotate_matrix = Fidentity;
 
-    void FromScreenToItem(int x_screen, int y_screen, float& x_item, float& y_item);
+	void FromScreenToItem(int x_screen, int y_screen, float& x_item, float& y_item);
 
-    IRenderVisual* m_pCurrentItem = nullptr;
+	IRenderVisual* pCurrentVisual = NULL;
 
-    float fViewportNear, fViewportDist, fViewportAspect;
-    float fViewportFOV, fViewportSize;
+	float fViewportNear, fViewportDist, fViewportAspect;
+	float fViewportFOV, fViewportSize;
 
-    Fmatrix mView, mInvView, mProject;
+	Fmatrix mView, mInvView, mProject, mRotate;
+
+	float fScaleFactor;
 };
