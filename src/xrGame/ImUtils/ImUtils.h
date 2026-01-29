@@ -25,6 +25,9 @@ struct clsid_manager
 	void add_outfit(CLASS_ID id);
 	bool is_outfit(CLASS_ID id);
 
+	void add_rig(CLASS_ID id);
+	bool is_rig(CLASS_ID id);
+
 	void add_ammo(CLASS_ID id);
 	bool is_ammo(CLASS_ID id);
 
@@ -84,6 +87,7 @@ struct clsid_manager
 
 	CLASS_ID outfit = TEXT2CLSID("E_STLK");
 	CLASS_ID helmet = TEXT2CLSID("E_HLMET");
+	CLASS_ID rig = TEXT2CLSID("EQUIP_RG");
 
 	CLASS_ID monster_bloodsucker = TEXT2CLSID("SM_BLOOD");
 	CLASS_ID monster_boar = TEXT2CLSID("SM_BOARW");
@@ -261,6 +265,7 @@ private:
 	xr_set<CLASS_ID> items_used;
 	xr_set<CLASS_ID> devices;
 	xr_set<CLASS_ID> outfits;
+	xr_set<CLASS_ID> rigs;
 	xr_set<CLASS_ID> ammo;
 	xr_set<CLASS_ID> addons;
 	xr_set<CLASS_ID> artefacts;

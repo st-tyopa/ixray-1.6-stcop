@@ -45,6 +45,7 @@ struct
 	SectionData DevicesSections = {};
 	SectionData AmmoSections = {};
 	SectionData OutfitSections = {};
+	SectionData RigSections = {};
 	SectionData AddonSections = {};
 	SectionData ArtefactSections = {};
 	SectionData MpStuffSections = {};
@@ -251,6 +252,17 @@ void InitSections()
 			else
 			{
 				imgui_spawn_manager.OutfitSections.Unsorted.push_back({ name, &sect });
+			}
+		}
+		else if (g_pClsidManager->is_rig(classId))
+		{
+			if (isInvItem)
+			{
+				imgui_spawn_manager.RigSections.Sorted.push_back({ name, &sect });
+			}
+			else
+			{
+				imgui_spawn_manager.RigSections.Unsorted.push_back({ name, &sect });
 			}
 		}
 		else if (g_pClsidManager->is_addon(classId))
@@ -912,6 +924,33 @@ void RenderSpawnManagerWindow() {
 				{
 					ImGui::SeparatorText("Unsorted");
 					SpawnManager_ProcessSections(imgui_spawn_manager.OutfitSections.Unsorted, number_imgui);
+				}
+
+				ImGui::EndTabItem();
+			}
+
+			if (ImGui::BeginTabItem("Rigs"))
+			{
+				size_t number_imgui{};
+				SectionStatistics(imgui_spawn_manager.RigSections);
+				static string128 searchBuffer = "";
+				ImGui::InputText("Search##Rigs", searchBuffer, IM_ARRAYSIZE(searchBuffer));
+
+				Section filteredList = FilterSectionsWithSearch(imgui_spawn_manager.RigSections.Sorted, searchBuffer);
+				SpawnManager_ProcessSections(filteredList, number_imgui);
+
+				if (imgui_spawn_manager.sort_by_max_cost)
+				{
+					maxSortCost(imgui_spawn_manager.RigSections.Sorted);
+				}
+				else if (imgui_spawn_manager.sort_by_min_cost)
+				{
+					minSortCost(imgui_spawn_manager.RigSections.Sorted);
+				}
+				if (imgui_spawn_manager.RigSections.Unsorted.size() > 0)
+				{
+					ImGui::SeparatorText("Unsorted");
+					SpawnManager_ProcessSections(imgui_spawn_manager.RigSections.Unsorted, number_imgui);
 				}
 
 				ImGui::EndTabItem();

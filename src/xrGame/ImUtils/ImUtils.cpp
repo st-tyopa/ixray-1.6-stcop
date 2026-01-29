@@ -354,6 +354,15 @@ void clsid_manager::add_outfit(CLASS_ID id) {
 bool clsid_manager::is_outfit(CLASS_ID id) {
 	return outfits.contains(id);
 }
+
+void clsid_manager::add_rig(CLASS_ID id) {
+	rigs.insert(id);
+}
+
+bool clsid_manager::is_rig(CLASS_ID id) {
+	return rigs.contains(id);
+}
+
 void clsid_manager::add_ammo(CLASS_ID id) {
 	ammo.insert(id);
 }

@@ -538,6 +538,7 @@ void InitImGuiCLSIDInGame()
 
 	imgui_clsid_manager.add_outfit(imgui_clsid_manager.outfit);
 	imgui_clsid_manager.add_outfit(imgui_clsid_manager.helmet);
+	imgui_clsid_manager.add_rig(imgui_clsid_manager.rig);
 
 	imgui_clsid_manager.add_addon(imgui_clsid_manager.addon_scope);
 	imgui_clsid_manager.add_addon(imgui_clsid_manager.addon_silen);
