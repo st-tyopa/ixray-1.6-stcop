@@ -539,9 +539,7 @@ void CUIMainIngameWnd::Draw()
 	}
 
 	UIMotionIcon->SetNoise((s16)(0xffff&iFloor(pActor->m_snd_noise*100)));
-
 	UIMotionIcon->Draw();
-
 
 	const static bool noHUDonMaster = EngineExternal()[EEngineExternalUI::DisableHudRenderingOnMaster];
 	if (noHUDonMaster)
@@ -1022,9 +1020,10 @@ void CUIMainIngameWnd::AnimateContacts(bool b_snd)
 {
 	UIZoneMap->Counter_ResetClrAnimation();
 
-	if(b_snd)
-		HUD_SOUND_ITEM::PlaySound	(m_contactSnd, Fvector().set(0,0,0), 0, true );
-
+	if (!psHUD_Flags.test(HUD_MINIMAP))
+		b_snd = false;
+	if (b_snd)
+		HUD_SOUND_ITEM::PlaySound(m_contactSnd, Fvector().set(0,0,0), 0, true);
 }
 
 
