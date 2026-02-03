@@ -25,6 +25,8 @@ public:
 	void LoadItemTexture(LPCSTR section, Ivector2 cell_pos);
 	void ReloadReferences(CInventoryOwner* pActor);
 
+	virtual void Update	() override;
+	
 	virtual void 	OnItemDBClick		(CUIWindow* w, void* pData);
 	virtual void 	OnItemDrop			(CUIWindow* w, void* pData);
 

@@ -109,6 +109,11 @@ CInventory::CInventory()
 		m_iMaxBelt = pSettings->r_s32("inventory", "max_belt");
 	}
 
+	if (!pSettings->line_exist("inventory", "default_rig"))
+	{
+		m_iDefaultRig = pSettings->r_u32("inventory", "default_rig");
+	}
+
 	InitPriorityGroupsForQSwitch();
 	LoadCallbackGlobals(m_isItemAvailableToTrade, m_onItemAvailableToTrade, "OnItemAvailableToTrade");
 	LoadCallbackGlobals(m_isInventoryEat, m_onInventoryEat, "OnInventoryEat");

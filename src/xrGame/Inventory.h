@@ -158,6 +158,9 @@ public:
 	// Максимальное кол-во объектов на поясе
 	u32 m_iMaxBelt = 0;
 
+	// Максимальное кол-во объектов на поясе
+	u32 m_iDefaultRig = 1;
+
 protected:
 	void UpdateDropTasks();
 	void UpdateDropItem(PIItem pIItem);

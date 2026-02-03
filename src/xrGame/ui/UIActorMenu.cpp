@@ -41,6 +41,7 @@
 #include "Car.h"
 #include "../xrEngine/string_table.h"
 #include "InventorySorter.h"
+#include "src/xrUI/Widgets/UITabControl.h"
 
 void CUIActorMenu::OnSortCategoryButtonClick(CUIWindow* w, void* pData)
 {
@@ -289,6 +290,7 @@ void CUIActorMenu::SetMenuMode(EMenuMode mode)
 		button->Show(showSortButtons);
 		button->Enable(showSortButtons);
 	}
+	SetActiveInventoryTab(0);
 }
 
 void CUIActorMenu::PlaySnd(eActorMenuSndAction a)
@@ -299,7 +301,20 @@ void CUIActorMenu::PlaySnd(eActorMenuSndAction a)
 
 void CUIActorMenu::SendMessage(CUIWindow* pWnd, s16 msg, void* pData)
 {
-	CUIWndCallback::OnEvent		(pWnd, msg, pData);
+	switch (msg)
+	{
+	case TAB_CHANGED:
+		{
+			if (m_pTabControl && pWnd == m_pTabControl->ui_cast_window())
+			{
+				SetActiveInventoryTab(m_pTabControl->GetActiveIndex());
+			}
+		}break;
+	default:
+		{
+			CUIWndCallback::OnEvent		(pWnd, msg, pData);		
+		}
+	}
 }
 
 void CUIActorMenu::Show(bool status)
@@ -315,7 +330,14 @@ void CUIActorMenu::Show(bool status)
 		PlaySnd								(eSndClose);
 		SetMenuMode							(mmUndefined);
 	}
-	m_ActorStateInfo->Show					(status);
+	if (m_pTabControl)
+	{
+		m_ActorStateInfo->Show(status && m_pTabControl->GetActiveIndex() == 1);	
+	}
+	else
+	{
+		m_ActorStateInfo->Show(status);
+	}
 }
 
 void CUIActorMenu::Draw()

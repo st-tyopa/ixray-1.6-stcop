@@ -10,6 +10,7 @@
 #include <WeaponMagazined.h>
 
 class CUICharacterInfo;
+class CUITabControl;
 class CUIDragDropListEx;
 class CUIDragDropReferenceList;
 class CUICellItem;
@@ -93,6 +94,15 @@ protected:
 	CUICharacterInfo*			m_ActorCharacterInfo;
 	CUICharacterInfo*			m_PartnerCharacterInfo;
 
+	CUITabControl*				m_pTabControl;
+	CUIScrollView*				m_pActorInventoryScroll;
+	CUIWindow*					m_pActorInventoryScrollBackplate;
+	CUIWindow*					m_pActorInventorySlotBackplate;
+
+	CUIStatic*					m_pInventoryRigLabel;
+	CUIStatic*					m_pInventoryBagLabel;
+	CUIStatic*					m_pInventoryBeltLabel;
+	
 	CUIDragDropListEx*			m_pInventoryBeltList;
 	CUIDragDropListEx*			m_pInventoryBagList;
 	CUIDragDropListEx*			m_pInventoryRigList;
@@ -261,6 +271,7 @@ private:
 
 protected:			
 	void						Construct					();
+	void						ConstructCustom				();
 	void						InitCallbacks				();
 
 	void						InitCellForSlot				(u16 slot_idx);
@@ -290,6 +301,7 @@ protected:
 	void				OnDragItemOnTrash			(CUIDragItem* item, bool b_receive);
 	bool						OnItemDropped				(PIItem itm, CUIDragDropListEx* new_owner, CUIDragDropListEx* old_owner);
 
+	void						SetActiveInventoryTab		(u32 index);	
 	void						ResetMode					();
 	void						InitInventoryMode			();
 	void						DeInitInventoryMode			();
@@ -334,6 +346,7 @@ protected:
 	void						UpdateActorMoneyMP();
 	void						UpdateOutfit				();
 	void						UpdateRig					();
+	void						UpdateInvScrollBackplate	();
 	void						MoveArtefactsToBag			();
 	bool						TryActiveSlot				(CUICellItem* itm);
 	void						TryRepairItem				(CUIWindow* w, void* d);

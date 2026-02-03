@@ -544,6 +544,11 @@ void CUIDragDropListEx::SetCellsHorizAlignment(xr_string alignment)
 	m_virtual_cells_alignment.x = 1;
 }
 
+void CUIDragDropListEx::SetLockedCells(u32 count)
+{
+	
+}
+
 Ivector2 CUIDragDropListEx::PickCell(const Fvector2& abs_pos) 
 {
 	return m_container->PickCell(abs_pos);
@@ -569,6 +574,7 @@ CUICellContainer::CUICellContainer(CUIDragDropListEx* parent)
 	}
 //	hShader_selected->create	( "hud\\fog_of_war", "ui_grid_selected" );
 	m_cellSpacing.set			( 0, 0 );
+	m_inlineCapacity = -1;
 }
 
 CUICellContainer::~CUICellContainer()
@@ -861,7 +867,9 @@ void CUICellContainer::Shrink()
 
 bool CUICellContainer::ValidCell(const Ivector2& pos) const
 {
-	return !(pos.x<0 || pos.y<0 || pos.x>=m_cellsCapacity.x || pos.y>=m_cellsCapacity.y);
+	const bool bInRect = !(pos.x<0 || pos.y<0 || pos.x>=m_cellsCapacity.x || pos.y>=m_cellsCapacity.y);
+	const bool bInInlineCapacity = m_inlineCapacity != -1 || pos.y * m_cellsCapacity.x + pos.x <= m_inlineCapacity;
+	return bInRect && bInInlineCapacity;
 }
 
 // FFx0001 add support ignore items by ids

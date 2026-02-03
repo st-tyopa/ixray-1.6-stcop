@@ -193,6 +193,32 @@ void CUIDragDropReferenceList::ReloadReferences(CInventoryOwner* pActor)
 	}
 }
 
+void CUIDragDropReferenceList::Update()
+{
+	inherited::Update			();
+	
+	if( m_drag_item )
+	{
+		Frect	wndRect;
+		GetAbsoluteRect(wndRect);
+		Fvector2 cp	= GetUICursor().GetCursorPosition();
+		if ( wndRect.in(cp) )
+		{
+			if ( m_drag_item->BackList() != this )
+			{
+				m_drag_item->SetBackList(this);	
+			}
+		}
+		else
+		{
+			if ( m_drag_item->BackList() == this )
+			{
+				m_drag_item->SetBackList(nullptr);	
+			}	
+		}
+	}
+}
+
 void CUIDragDropReferenceList::OnItemDBClick(CUIWindow* w, void* pData)
 {
 	CUIStatic* ref = w->ui_cast_static();

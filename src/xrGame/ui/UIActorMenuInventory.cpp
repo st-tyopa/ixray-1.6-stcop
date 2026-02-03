@@ -1101,6 +1101,18 @@ bool CUIActorMenu::OnItemDropped(PIItem itm, CUIDragDropListEx* new_owner, CUIDr
 	return							true;
 }
 
+void CUIActorMenu::SetActiveInventoryTab(u32 index)
+{
+	if (m_pActorInventorySlotBackplate)
+	{
+		m_pActorInventorySlotBackplate->Show(index == 0);	
+	}
+	if (m_ActorStateInfo)
+	{
+		m_ActorStateInfo->Show(index == 1);	
+	}
+}
+
 void CUIActorMenu::TryHidePropertiesBox()
 {
 	if ( m_UIPropertiesBox->IsShown() )
@@ -1927,14 +1939,23 @@ void CUIActorMenu::UpdateRig()
 			ToBag( ci, false );
 		}//for while
 		m_pInventoryRigList->ClearAll(true);
+		Ivector2 capacity = m_pInventoryRigList->CellsCapacity();
+		capacity.y = m_pActorInvOwner->inventory().m_iDefaultRig;
+		m_pInventoryRigList->SetCellsCapacity(capacity);
+		m_pInventoryRigList->SetHeight(capacity.y * m_pInventoryRigList->CellSize().y + 1);
+		m_pInventoryRigList->ReinitScroll();
+		UpdateInvScrollBackplate();
 		return;
 	}
 	if (m_pInventoryRigList->ItemsCount() == 0)
 	{
-		Ivector2 capacity;
-		capacity.x = rig->m_rig_width; //m_pInventoryRigList->CellsCapacity().x; // rig->m_rig_width;
+		Ivector2 capacity = m_pInventoryRigList->CellsCapacity();
+		//capacity.x = rig->m_rig_width; //m_pInventoryRigList->CellsCapacity().x; // rig->m_rig_width;
 		capacity.y = rig->m_rig_height; //m_pInventoryRigList->CellsCapacity().y; // rig->m_rig_height;
 		m_pInventoryRigList->SetCellsCapacity(capacity);
+		m_pInventoryRigList->SetHeight(capacity.y * m_pInventoryRigList->CellSize().y + 1);
+		m_pInventoryRigList->ReinitScroll();
+		UpdateInvScrollBackplate();
 		
 		TIItemContainer::iterator itb = m_pActorInvOwner->inventory().m_rig.begin();
 		TIItemContainer::iterator ite = m_pActorInvOwner->inventory().m_rig.end();
@@ -1945,6 +1966,50 @@ void CUIActorMenu::UpdateRig()
 			if ( m_currMenuMode == mmTrade && m_pPartnerInvOwner )
 				ColorizeItem( itm, !CanMoveToPartner( *itb ) );
 		}
+	}
+}
+
+void CUIActorMenu::UpdateInvScrollBackplate()
+{
+	if (!m_pActorInventorySlotBackplate)
+	{
+		return;
+	}
+	float dy = 0.0f; //m_pInventoryRigLabel->GetWndPos().y + m_pInventoryRigLabel->GetHeight() + 10.0f;
+	Fvector2 position = m_pInventoryRigLabel->GetWndPos();
+	position.y = dy;
+	m_pInventoryRigLabel->SetWndPos(position);
+	dy += m_pInventoryRigLabel->GetHeight() + 10;
+
+	position = m_pInventoryRigList->GetWndPos();
+	position.y = dy;
+	m_pInventoryRigList->SetWndPos(position);
+	dy += m_pInventoryRigList->GetHeight() + 10;
+	
+	position = m_pInventoryBeltLabel->GetWndPos();
+	position.y = dy;
+	m_pInventoryBeltLabel->SetWndPos(position);
+	dy += m_pInventoryBeltLabel->GetHeight() + 10;
+
+	position = m_pInventoryBeltList->GetWndPos();
+	position.y = dy;
+	m_pInventoryBeltList->SetWndPos(position);
+	dy += m_pInventoryBeltList->GetHeight() + 10;
+
+	position = m_pInventoryBagLabel->GetWndPos();
+	position.y = dy;
+	m_pInventoryBagLabel->SetWndPos(position);
+	dy += m_pInventoryBagLabel->GetHeight() + 10;
+
+	position = m_pInventoryBagList->GetWndPos();
+	position.y = dy;
+	m_pInventoryBagList->SetWndPos(position);
+	dy += m_pInventoryBagList->GetHeight() + 10;
+
+	m_pActorInventorySlotBackplate->SetHeight(dy);
+	if (m_pActorInventoryScroll)
+	{
+		m_pActorInventoryScroll->ForceUpdate();
 	}
 }
 
@@ -1984,3 +2049,4 @@ void CUIActorMenu::RefreshCurrentItemCell()
 		}
 	}
 }
+

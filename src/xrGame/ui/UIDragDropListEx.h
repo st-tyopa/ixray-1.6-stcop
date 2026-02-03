@@ -16,13 +16,13 @@ enum EListType{
 };
 
 struct CUICell{
-							CUICell					()						{m_item=NULL; Clear();}
+							CUICell					()						{m_item=nullptr; Clear();}
 
 		CUICellItem*		m_item;
 		bool				m_bMainItem;
 
 		void				SetItem					(CUICellItem* itm, bool bMain)		{m_item = itm; VERIFY(m_item);m_bMainItem = bMain;}
-		bool				Empty					()						{return m_item == NULL;}
+		bool				Empty					()						{return m_item == nullptr;}
 		bool				MainItem				()						{return m_bMainItem;}
 		void				Clear					();
 		bool				operator ==				(const CUICell& C) const{return (m_item == C.m_item);}
@@ -96,6 +96,7 @@ public:
 			void			SetCellsSpacing		(const Ivector2& new_sz);
 			void			SetCellsVertAlignment(xr_string alignment);
 			void			SetCellsHorizAlignment(xr_string alignment);
+			void			SetLockedCells		(u32 count);
 
 	const	Ivector2		GetVirtualCellsAlignment() {return m_virtual_cells_alignment;};
 
@@ -166,6 +167,7 @@ protected:
 	Ivector2					m_cellsCapacity;			//count		(col,	row)
 	Ivector2					m_cellSize;					//pixels	(width, height)
 	Ivector2					m_cellSpacing;				//pixels	(width, height)
+	u32							m_inlineCapacity;			// capacity of container in one number
 
 	UI_CELLS_VEC				m_cells;
 
@@ -185,11 +187,11 @@ public:
 protected:
 	virtual		void			Draw				();
 
-	IC const	Ivector2&		CellsCapacity		()								{return m_cellsCapacity;};	
+	IC const	Ivector2&		CellsCapacity		()								{return m_cellsCapacity;}
 				void			SetCellsCapacity	(const Ivector2& c);
-	IC const	Ivector2&		CellSize			()								{return m_cellSize;};	
+	IC const	Ivector2&		CellSize			()								{return m_cellSize;}	
 				void			SetCellSize			(const Ivector2& new_sz);
-	IC const	Ivector2&		CellsSpacing		()								{return m_cellSpacing;};	
+	IC const	Ivector2&		CellsSpacing		()								{return m_cellSpacing;}	
 				void			SetCellsSpacing		(const Ivector2& new_sz);
 				Ivector2		TopVisibleCell		();
 				Ivector2		GetItemPos			(CUICellItem* itm);
