@@ -32,6 +32,19 @@ void CHitImmunity::LoadImmunities(LPCSTR imm_sect, CInifile const * ini)
 	m_HitImmunityKoefs[ALife::eHitTypeFireWound]	= ini->r_float(imm_sect,"fire_wound_immunity");
 //	m_HitImmunityKoefs[ALife::eHitTypePhysicStrike]	= READ_IF_EXISTS(ini, r_float, imm_sect,"physic_strike_wound_immunity", 1.0f);
 	m_HitImmunityKoefs[ALife::eHitTypeLightBurn]	= m_HitImmunityKoefs[ALife::eHitTypeBurn];
+
+	// add randomization
+	m_HitImmunityKoefs[ALife::eHitTypeBurn]         += READ_IF_EXISTS(ini, r_float, imm_sect, "burn_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeStrike]       += READ_IF_EXISTS(ini, r_float, imm_sect, "strike_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeShock]        += READ_IF_EXISTS(ini, r_float, imm_sect, "shock_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeWound]        += READ_IF_EXISTS(ini, r_float, imm_sect, "wound_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeRadiation]    += READ_IF_EXISTS(ini, r_float, imm_sect, "radiation_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeTelepatic]    += READ_IF_EXISTS(ini, r_float, imm_sect, "telepatic_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeChemicalBurn] += READ_IF_EXISTS(ini, r_float, imm_sect, "chemical_burn_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeExplosion]    += READ_IF_EXISTS(ini, r_float, imm_sect, "explosion_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeFireWound]    += READ_IF_EXISTS(ini, r_float, imm_sect, "fire_wound_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+//	m_HitImmunityKoefs[ALife::eHitTypePhysicStrike]	+= READ_IF_EXISTS(ini, r_float, imm_sect,"physic_strike_wound_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
+	m_HitImmunityKoefs[ALife::eHitTypeLightBurn]    += READ_IF_EXISTS(ini, r_float, imm_sect, "light_burn_immunity_d", 0.0f) * Random.randF(-1.0f, 1.0f);
 }
 
 void CHitImmunity::AddImmunities(LPCSTR imm_sect, CInifile const * ini)

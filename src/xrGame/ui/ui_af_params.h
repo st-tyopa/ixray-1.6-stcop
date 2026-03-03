@@ -53,7 +53,7 @@ public:
 		
 		bool	Init				( CUIXml& xml, LPCSTR section );
 		void	SetCaption			( LPCSTR name );
-		void	SetValue			( float value );
+		void	SetValue			( float value, float delta_min = 0.0f, float delta_max = 0.0f);
 	
 	virtual CUIWindow* ui_cast_window() { return this; }
 

@@ -114,6 +114,15 @@ void CArtefact::Load(LPCSTR section)
 	m_af_rank				= pSettings->r_u8(section, "af_rank");
 	m_additional_weight		= pSettings->r_float(section,"additional_inventory_weight");
 	m_fDegradationRate		= READ_IF_EXISTS(pSettings, r_float, section, "degrade_rate", 0.0f);
+
+	// randomizer
+	m_fHealthRestoreSpeed		+= READ_IF_EXISTS(pSettings, r_float, section, "health_restore_speed_d",		0.0f) * Random.randF(-1.0f, 1.0f);
+	m_fRadiationRestoreSpeed	+= READ_IF_EXISTS(pSettings, r_float, section, "radiation_restore_speed_d",		0.0f) * Random.randF(-1.0f, 1.0f);
+	m_fSatietyRestoreSpeed		+= READ_IF_EXISTS(pSettings, r_float, section, "satiety_restore_speed_d",		0.0f) * Random.randF(-1.0f, 1.0f);
+	m_fThirstRestoreSpeed		+= READ_IF_EXISTS(pSettings, r_float, section, "thirst_restore_speed_d",		0.0f) * Random.randF(-1.0f, 1.0f);
+	m_fPowerRestoreSpeed		+= READ_IF_EXISTS(pSettings, r_float, section, "power_restore_speed_d",			0.0f) * Random.randF(-1.0f, 1.0f);
+	m_fBleedingRestoreSpeed		+= READ_IF_EXISTS(pSettings, r_float, section, "bleeding_restore_speed_d",		0.0f) * Random.randF(-1.0f, 1.0f);
+	m_additional_weight			+= READ_IF_EXISTS(pSettings, r_float, section, "additional_inventory_weight_d", 0.0f) * Random.randF(-1.0f, 1.0f);
 }
 
 BOOL CArtefact::net_Spawn(CSE_Abstract* DC) 

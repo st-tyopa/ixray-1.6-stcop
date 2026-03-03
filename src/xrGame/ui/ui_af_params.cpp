@@ -59,6 +59,34 @@ LPCSTR af_immunity_section_names[] = // ALife::EInfluenceType
 	"strike_immunity",
 };
 
+LPCSTR af_immunity_section_names_delta[] = // ALife::EInfluenceType
+{
+	"radiation_immunity_d",		// infl_rad=0
+	"burn_immunity_d",			// infl_fire=1
+	"chemical_burn_immunity_d",	// infl_acid=2
+	"telepatic_immunity_d",		// infl_psi=3
+	"shock_immunity_d",			// infl_electra=4
+
+	//Alundaio: Uncommented
+	"wound_immunity_d",		
+	"fire_wound_immunity_d",
+	"explosion_immunity_d",
+	"strike_immunity_d",
+};
+
+ALife::EHitType af_immunity_sect_mapping[] =
+{
+	ALife::eHitTypeRadiation,
+	ALife::eHitTypeBurn,
+	ALife::eHitTypeChemicalBurn,
+	ALife::eHitTypeTelepatic,
+	ALife::eHitTypeShock,
+	ALife::eHitTypeWound,
+	ALife::eHitTypeFireWound,
+	ALife::eHitTypeExplosion,
+	ALife::eHitTypeStrike
+};
+
 LPCSTR af_restore_section_names[] = // ALife::EConditionRestoreType
 {
 	"health_restore_speed",			// eHealthRestoreSpeed=0
@@ -228,15 +256,23 @@ void CUIArtefactParams::SetInfo(CInventoryItem& pInvItem)
 	{
 		for (u32 i = 0; i < ALife::eHitTypeWound_2; ++i)
 		{
-			shared_str const& sect = pSettings->r_string(af_section, "hit_absorbation_sect");
-			val = pSettings->r_float(sect, af_immunity_section_names[i]);
+			
+			val = pInvItem.cast_artefact()->m_ArtefactHitImmunities.GetHitImmunity(af_immunity_sect_mapping[i]);
 			if (fis_zero(val) || !m_immunity_item[i])
 			{
 				continue;
 			}
 			max_val = actor->conditions().GetZoneMaxPower((ALife::EInfluenceType)i);
+			
+			shared_str const& sect = pSettings->r_string(af_section, "hit_absorbation_sect");
+			const float base = pSettings->r_float(sect, af_immunity_section_names[i]);
+			const float delta = pSettings->r_float(sect, af_immunity_section_names_delta[i]);
+			const float delta_min = (base-delta) / max_val;
+			const float delta_max = (base-delta) / max_val;
+			
+			const float cond = pInvItem.GetCondition();
 			val /= max_val;
-			m_immunity_item[i]->SetValue(val * pInvItem.GetCondition());
+			m_immunity_item[i]->SetValue(val * cond, delta_min * cond, delta_max * cond);
 
 			pos.set(m_immunity_item[i]->GetWndPos());
 			pos.y = h;
@@ -285,7 +321,14 @@ void CUIArtefactParams::SetInfo(CInventoryItem& pInvItem)
 	}
 
 	{
-		val	= READ_IF_EXISTS(pSettings, r_float, af_section, "additional_inventory_weight", 0.0f);
+		if (is_artefact())
+		{
+			val = pInvItem.cast_artefact()->AdditionalInventoryWeight();
+		}
+		else
+		{
+			val	= READ_IF_EXISTS(pSettings, r_float, af_section, "additional_inventory_weight", 0.0f);	
+		}
 		if ( !fis_zero(val) )
 		{
 			m_additional_weight->SetValue(val * (is_artefact() ? pInvItem.GetCondition() : 1));
@@ -352,11 +395,13 @@ void UIArtefactParamItem::SetCaption( LPCSTR name )
 	m_caption->TextItemControl()->SetText( name );
 }
 
-void UIArtefactParamItem::SetValue( float value )
+void UIArtefactParamItem::SetValue( float value, float delta_min, float delta_max )
 {
 	value *= m_magnitude;
+	delta_min *= m_magnitude;
+	delta_max *= m_magnitude;
 	string32	buf;
-	xr_sprintf( buf, "%+.0f", value );
+	xr_sprintf( buf, "%+.0f (from %+.0f to %+.0f)", value, delta_min, delta_max );
 	
 	string256 str;
 	if ( m_unit_str.size() )
