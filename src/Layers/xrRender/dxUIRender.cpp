@@ -2,6 +2,7 @@
 #include "dxUIRender.h"
 
 #include "dxUIShader.h"
+#include "dxRenderDeviceRender.h"
 
 dxUIRender	UIRenderImpl;
 
@@ -151,6 +152,11 @@ void dxUIRender::GetActiveTextureResolution(Fvector2 &res)
 {
 	CTexture* T		= RCache.get_ActiveTexture(0);
 	res.set			(float(T->get_Width()),float(T->get_Height()));
+}
+
+void dxUIRender::GetTextureResolution(const shared_str& textureName, Fvector2& result)
+{
+	DEV->GetTextureResolution(textureName.c_str(), result);
 }
 
 LPCSTR dxUIRender::UpdateShaderName(LPCSTR tex_name, LPCSTR sh_name)

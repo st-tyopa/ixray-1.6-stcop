@@ -246,6 +246,9 @@ public:
 	void			DestroyNecessaryTextures();
 	void			Dump					(bool bBrief);
 
+	// for UI X need know about texture resolution before render first time
+	void GetTextureResolution(LPCSTR pName, Fvector2 &resolution);
+
 private:
 #ifdef USE_DX11
 	map_DS	m_ds;

@@ -244,6 +244,7 @@ bool CRenderDevice::InitRenderDevice(APILevel API)
 			{
 				ImGui::MenuItem("Shader Debug", nullptr, &States[static_cast<u8>(EditorUI::Shaders)]);
 				ImGui::MenuItem("Render Debug", nullptr, &States[static_cast<u8>(EditorUI::DebugDraw)]);
+				ImGui::MenuItem("UI X Debug", nullptr, &States[static_cast<u8>(EditorUI::UI_X_General)]);
 			#if defined(IXRAY_PROFILER)
 				if (ImGui::MenuItem("Optick Start Capture"))
 				{

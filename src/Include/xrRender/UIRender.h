@@ -52,6 +52,7 @@ public:
 //.	virtual void FlushLineList() = 0;
 	virtual void SetScissor(Irect* rect=NULL) = 0;
 	virtual void GetActiveTextureResolution(Fvector2 &res) = 0;
+	virtual void GetTextureResolution(const shared_str& textureName, Fvector2& result) = 0;
 
 //.	virtual void PushPoint(float x, float y, u32 c, float u, float v) = 0;
 //.	virtual void PushPoint(int x, int y, u32 c, float u, float v) = 0;

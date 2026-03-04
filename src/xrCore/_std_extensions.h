@@ -197,6 +197,21 @@ inline errno_t xr_strcat	( char (&destination)[count], LPCSTR source )
 	return						xr_strcat( destination, count, source );
 }
 
+template <class type>
+ICF void xr_swap    ( type& left, type& right )
+{
+	std::swap(left, right);
+}
+
+template <class type>
+ICF type xr_max    ( const type& left, const type& right )
+{
+	return std::max(left, right);
+}
+
+ICF double xr_sin(double angle) { return std::sin(angle); }
+ICF double xr_cos(double angle) { return std::cos(angle); }
+
 XRCORE_API	char*				timestamp				(string64& dest);
 
 extern XRCORE_API u32			crc32					(const void* P, size_t len);

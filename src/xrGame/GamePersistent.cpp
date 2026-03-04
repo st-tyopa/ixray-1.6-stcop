@@ -40,6 +40,7 @@
 #include "../xrCore/discord/discord.h"
 #include "../xrEngine/string_table.h"
 #include "Level_Bullet_Manager.h"
+#include "../xrUI/ui_x/CUIXCore.h"
 
 extern int g_keypress_on_start;
 
@@ -60,6 +61,7 @@ CGamePersistent::CGamePersistent(void)
 	ZeroMemory					(ambient_sound_next_time, sizeof(ambient_sound_next_time));
 	
 
+	g_uiXCore					= nullptr;	
 	m_pUI_core					= nullptr;
 	m_pMainMenu					= nullptr;
 	m_intro						= nullptr;
@@ -146,6 +148,7 @@ void CGamePersistent::OnAppStart()
 	GMLib.Load					();
 	init_game_globals			();
 	inherited::OnAppStart			();
+	g_uiXCore					= new CUIXCore();
 	m_pUI_core					= new ui_core();
 	m_pMainMenu					= new CMainMenu();
 }

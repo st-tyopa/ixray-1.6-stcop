@@ -219,3 +219,35 @@ void dxFontRender::CreateFontAtlas(u32 width, u32 height, const char* name, void
 
 	_RELEASE(pSurface);
 }
+
+void dxFontRender::ApplyShader()
+{
+	VERIFY(pShader);
+	RCache.set_Shader(pShader);
+}
+
+void dxFontRender::StartText(u32 textLength)
+{
+	m_vertexCount = 0;
+	m_pVertexes = (FFontGlyphPoly2d*) RCache.Vertex.Lock(textLength * 4, pGeom.stride(), m_vOffset);
+}
+
+void dxFontRender::PushGlyph(const Frect& pt, const Frect& uv, u32 color)
+{
+	m_vertexCount += 4;
+	*m_pVertexes = {
+		Fvector4{pt.x1, pt.y2,.0001f,.9999f}, color, Fvector2{uv.x1, uv.y2},
+		Fvector4{pt.x1, pt.y1,.0001f,.9999f}, color, Fvector2{uv.x1, uv.y1},
+		Fvector4{pt.x2, pt.y2,.0001f,.9999f}, color, Fvector2{uv.x2, uv.y2},
+		Fvector4{pt.x2, pt.y1,.0001f,.9999f}, color, Fvector2{uv.x2, uv.y1}
+	};
+	++m_pVertexes;
+}
+
+void dxFontRender::FlushText()
+{
+	RCache.Vertex.Unlock(m_vertexCount, pGeom.stride());
+
+	RCache.set_Geometry(pGeom);
+	RCache.Render(D3DPT_TRIANGLELIST, m_vOffset, 0, m_vertexCount, 0, m_vertexCount / 2);
+}

@@ -133,3 +133,25 @@ void CResourceManager::Dump(bool bBrief)
 	Msg		("* RM_Dump: v_elements: %d",		v_elements.size());
 	Msg		("* RM_Dump: v_shaders : %d",		v_shaders.size());
 }
+
+void CResourceManager::GetTextureResolution(LPCSTR pName, Fvector2& resolution)
+{
+	R_ASSERT(pName && pName[0]);
+	if (0 == xr_strcmp(pName, "null"))
+	{
+		return;    
+	}
+	map_TextureIt I = m_textures.find(pName);
+	if (I != m_textures.end() )
+	{
+		if (!I->second->flags.bLoaded)
+		{
+			I->second->Load();    
+		}
+		resolution.set(float(I->second->get_Width()), float(I->second->get_Height()));
+	}
+	else
+	{
+		resolution.set(32.0f, 32.0f);
+	}
+}

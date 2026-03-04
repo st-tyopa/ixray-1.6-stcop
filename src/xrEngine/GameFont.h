@@ -109,6 +109,8 @@ public:
 	inline float GetHeight() { return fCurrentHeight; };
 	inline void SetAligment(EAligment aligment) { eCurrentAlignment = aligment; }
 
+	IFontRender* GetFontRender() const { return pFontRender; }
+	
 	float SizeOf_(const char* s);
 	float SizeOf_(int cChar);
 
