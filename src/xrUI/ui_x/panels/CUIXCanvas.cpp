@@ -7,12 +7,7 @@ void CUIXCanvasSlot::Rebuild()
     if (!m_pWidget)
     {
         return;
-    }
-    //const xr_vector2f parentPosition = m_pParent->GetPosition();
-    //const xr_vector2f parentSize = m_pParent->GetSize();
-    //const xr_vector2f offset = xr_vector2f().set(m_position.x - m_alignment.x * m_size.x, m_position.y - m_alignment.y * m_size.y);  
-
-    
+    }    
     const xr_vector2f offset = xr_vector2f().set(m_position.x - m_alignment.x * m_size.x, m_position.y - m_alignment.y * m_size.y);
     const xr_rect_f parentRect = m_pParent->GetRect();
     xr_vector2f position;
@@ -111,6 +106,42 @@ void CUIXCanvasSlot::Rebuild()
     m_pWidget->Rebuild();
 }
 
+void CUIXCanvasSlot::SetAnchor(EUIXAnchor anchor, bool forceRebuild)
+{
+    m_anchor = anchor;
+    if (forceRebuild)
+    {
+        Rebuild();   
+    }
+}
+
+void CUIXCanvasSlot::SetAlignment(const xr_vector2f& alignment, bool forceRebuild)
+{
+    m_alignment = alignment;
+    if (forceRebuild)
+    {
+        Rebuild();   
+    }
+}
+
+void CUIXCanvasSlot::SetPosition(const xr_vector2f& position, bool forceRebuild)
+{
+    m_position = position;
+    if (forceRebuild)
+    {
+        Rebuild();
+    }
+}
+
+void CUIXCanvasSlot::SetSize(const xr_vector2f& size, bool forceRebuild)
+{
+    m_size = size;
+    if (forceRebuild)
+    {
+        Rebuild();
+    }
+}
+
 #ifdef DEBUG_DRAW
 void CUIXCanvasSlot::RenderUIDebugProperties()
 {
@@ -147,42 +178,6 @@ void CUIXCanvasSlot::RenderUIDebugProperties()
     }
 }
 #endif
-
-void CUIXCanvasSlot::SetAnchor(EUIXAnchor anchor, bool forceRebuild)
-{
-    m_anchor = anchor;
-    if (forceRebuild)
-    {
-        Rebuild();   
-    }
-}
-
-void CUIXCanvasSlot::SetAlignment(const xr_vector2f& alignment, bool forceRebuild)
-{
-    m_alignment = alignment;
-    if (forceRebuild)
-    {
-        Rebuild();   
-    }
-}
-
-void CUIXCanvasSlot::SetPosition(const xr_vector2f& position, bool forceRebuild)
-{
-    m_position = position;
-    if (forceRebuild)
-    {
-        Rebuild();
-    }
-}
-
-void CUIXCanvasSlot::SetSize(const xr_vector2f& size, bool forceRebuild)
-{
-    m_size = size;
-    if (forceRebuild)
-    {
-        Rebuild();
-    }
-}
 
 void CUIXCanvasSlot::script_register(lua_State *L)
 {
@@ -241,16 +236,6 @@ void CUIXCanvas::Rebuild()
     }
 }
 
-#ifdef DEBUG_DRAW
-void CUIXCanvas::RenderUIDebugNodeChild()
-{
-    for (CUIXCanvasSlot* slot : m_slots)
-    {
-        slot->RenderUIDebugNode();
-    }
-}
-#endif
-
 CUIXWidgetSlot* CUIXCanvas::AttachChild(CUIXWidget* widget)
 {
     CUIXCanvasSlot* child = new CUIXCanvasSlot(this);
@@ -291,6 +276,16 @@ bool CUIXCanvas::OnKeyboardPressed(int key)
     }
     return false;
 }
+
+#ifdef DEBUG_DRAW
+void CUIXCanvas::RenderUIDebugNodeChild()
+{
+    for (CUIXCanvasSlot* slot : m_slots)
+    {
+        slot->RenderUIDebugNode();
+    }
+}
+#endif
 
 void CUIXCanvas::script_register(lua_State *L)
 {

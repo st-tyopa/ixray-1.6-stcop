@@ -42,6 +42,7 @@ void CUIXBrush::CreateShader(shared_str const& textureName, shared_str const& sh
     if (CUITextureMaster::InitTexture(textureName, shaderName, m_shader, textureRect))
     {
         xr_vector2f fileSize;
+        Msg("Loading texture from %s",CUITextureMaster::GetTextureFileName(textureName.c_str()));
         UIRender->GetTextureResolution(CUITextureMaster::GetTextureFileName(textureName.c_str()), fileSize);
         m_uv = textureRect;
         m_uv.div(fileSize.x, fileSize.y);
@@ -160,8 +161,8 @@ void CUIXBrush::script_register(lua_State *L)
 
 void CUIXBrush::RenderInternal(const xr_rect_f& drawRect, const FUIXRenderTransform& renderTransform)
 {
-    xr_vector2f textureSize;
-    UIRender->GetActiveTextureResolution(textureSize);    
+    //xr_vector2f textureSize;
+    //UIRender->GetActiveTextureResolution(textureSize);    
     
     xr_vector2f uvLT = m_uv.lt;
     xr_vector2f uvRB;

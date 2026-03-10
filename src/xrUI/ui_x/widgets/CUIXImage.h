@@ -26,6 +26,7 @@ public:
     // ----------------------------------------------------------------
     // --- Getters And Setters ----------------------------------------
     CUIXBrush* GetBrush() const { return m_pBrush; }
+    xr_vector2f GetDesiredSize() override;
     // ----------------------------------------------------------------
     // --- Script Register --------------------------------------------
     DECLARE_SCRIPT_REGISTER_FUNCTION

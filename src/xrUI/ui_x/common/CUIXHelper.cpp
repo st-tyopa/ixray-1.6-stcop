@@ -5,7 +5,9 @@
 #include "xrUIXmlParser.h"
 #include "../xrEngine/string_table.h"
 #include "ui_x/panels/CUIXCanvas.h"
+#include "ui_x/panels/CUIXHorizontalBox.h"
 #include "ui_x/panels/CUIXSwitcher.h"
+#include "ui_x/panels/CUIXVerticalBox.h"
 #include "ui_x/widgets/CUIXBorder.h"
 #include "ui_x/widgets/CUIXImage.h"
 #include "ui_x/widgets/CUIXTextBlock.h"
@@ -28,15 +30,23 @@ CUIXWidget* CUIXHelper::CreateWidget(CUIXml& xml, string_path path, const shared
         }
         else if (nodeName == "text")
         {
-            widget =  CreateTextBlock(xml, node, prefix)->ui_x_cast_widget();
+            widget = CreateTextBlock(xml, node, prefix)->ui_x_cast_widget();
         }
         else if (nodeName == "border")
         {
-            widget =  CreateBorder(xml, node, prefix)->ui_x_cast_widget();
+            widget = CreateBorder(xml, node, prefix)->ui_x_cast_widget();
         }
         else if (nodeName == "switcher")
         {
-            widget =  CreateSwitcher(xml, node, prefix)->ui_x_cast_widget();
+            widget = CreateSwitcher(xml, node, prefix)->ui_x_cast_widget();
+        }
+        else if (nodeName == "vertical_box")
+        {
+            widget = CreateVerticalBox(xml, node, prefix)->ui_x_cast_widget();
+        }
+        else if (nodeName == "horizontal_box")
+        {
+            widget = CreateHorizontalBox(xml, node, prefix)->ui_x_cast_widget();
         }
         
         if (widget && widgetId != "_")
@@ -61,11 +71,6 @@ CUIXCanvas* CUIXHelper::CreateCanvas(CUIXml& xml, XML_NODE* canvasNode, const sh
 {
     //
     CUIXCanvas* canvas = new CUIXCanvas();
-    xr_vector2f size;
-    size.x = xml.ReadAttribFlt(canvasNode, "w", float(Device.TargetWidth));
-    size.y = xml.ReadAttribFlt(canvasNode, "h", float(Device.TargetHeight));
-    canvas->SetRect(0.0f, 0.0f, size.x, size.y);
-
     const int slotCount = xml.GetNodesNum(canvasNode, "canvas_slot");
     for (int i = 0; i < slotCount; i++)
     {
@@ -121,7 +126,7 @@ CUIXCanvas* CUIXHelper::CreateCanvas(CUIXml& xml, XML_NODE* canvasNode, const sh
         else if (anchor == "rf") { slot->SetAnchor(EUIXAnchor::rfAnchor, false); }
         else if (anchor == "ff") { slot->SetAnchor(EUIXAnchor::ffAnchor, false); }
 
-        slot->Rebuild();
+        //slot->Rebuild();
 
         xml.SetLocalRoot(canvasNode);
     }
@@ -232,16 +237,16 @@ CUIXBorder* CUIXHelper::CreateBorder(CUIXml& xml, XML_NODE* borderNode, const sh
             CUIXBorderSlot* slot = border->AttachChild(widget)->ui_x_cast_border_slot();
         
             float padding = xml.ReadAttribFlt(xml.GetLocalRoot(), "p", 2.0f);
-            slot->SetPadding(padding, false);
+            slot->SetPadding(padding);
         
             xr_rect_f paddingRect = slot->GetPadding();
             paddingRect.x1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pl", paddingRect.x1);
             paddingRect.y1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pt", paddingRect.y1);
             paddingRect.x2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pr", paddingRect.x2);
             paddingRect.y2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pb", paddingRect.y2);
-            slot->SetPadding(paddingRect, false);
+            slot->SetPadding(paddingRect);
 
-            slot->Rebuild();
+            //slot->Rebuild();
 
             xml.SetLocalRoot(borderNode);   
         }
@@ -277,4 +282,92 @@ CUIXSwitcher* CUIXHelper::CreateSwitcher(CUIXml& xml, XML_NODE* switcherNode, co
     }
 
     return switcher;
+}
+
+CUIXVerticalBox* CUIXHelper::CreateVerticalBox(CUIXml& xml, XML_NODE* boxNode, const shared_str& prefix)
+{
+    CUIXVerticalBox* verticalBox = new CUIXVerticalBox();
+    const int slotCount = xml.GetNodesNum(boxNode, "vert_box_slot");
+    for (int i = 0; i < slotCount; i++)
+    {
+        // read child widget
+        XML_NODE* slotNode = xml.NavigateToNode("vert_box_slot", i);
+        if (slotNode == nullptr || slotNode->FirstChild() == nullptr)
+        {
+            continue;
+        }
+        xml.SetLocalRoot(slotNode);
+        CUIXWidget* widget = CreateWidget(xml, xr_strdup(slotNode->FirstChild()->Value()), prefix);
+        if (widget == nullptr)
+        {
+            continue;
+        }
+        // setup canvas slot 
+        xml.SetLocalRoot(slotNode);
+        CUIXVerticalBoxSlot* slot = verticalBox->AttachChild(widget)->ui_x_cast_vertical_box_slot();
+
+        const bool fillSpace = xml.ReadAttribBool(xml.GetLocalRoot(), "f", false);
+        slot->SetFillSpace(fillSpace);
+
+        const float fillWeight = xml.ReadAttribFlt(xml.GetLocalRoot(), "fw", 1.0f);
+        slot->SetFillWeight(fillWeight);
+
+        float padding = xml.ReadAttribFlt(xml.GetLocalRoot(), "p", .0f);
+        slot->SetPadding(padding);
+        
+        xr_rect_f paddingRect = slot->GetPadding();
+        paddingRect.x1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pl", paddingRect.x1);
+        paddingRect.y1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pt", paddingRect.y1);
+        paddingRect.x2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pr", paddingRect.x2);
+        paddingRect.y2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pb", paddingRect.y2);
+        slot->SetPadding(paddingRect);
+        
+        //slot->Rebuild();
+        xml.SetLocalRoot(boxNode);
+    }
+    return verticalBox;
+}
+
+CUIXHorizontalBox* CUIXHelper::CreateHorizontalBox(CUIXml& xml, XML_NODE* boxNode, const shared_str& prefix)
+{
+    
+    CUIXHorizontalBox* horizontalBox = new CUIXHorizontalBox();
+    const int slotCount = xml.GetNodesNum(boxNode, "horz_box_slot");
+    for (int i = 0; i < slotCount; i++)
+    {
+        // read child widget
+        XML_NODE* slotNode = xml.NavigateToNode("horz_box_slot", i);
+        if (slotNode == nullptr || slotNode->FirstChild() == nullptr)
+        {
+            continue;
+        }
+        xml.SetLocalRoot(slotNode);
+        CUIXWidget* widget = CreateWidget(xml, xr_strdup(slotNode->FirstChild()->Value()), prefix);
+        if (widget == nullptr)
+        {
+            continue;
+        }
+        // setup canvas slot 
+        xml.SetLocalRoot(slotNode);
+        CUIXHorizontalBoxSlot* slot = horizontalBox->AttachChild(widget)->ui_x_cast_horizontal_box_slot();
+
+        const bool fillSpace = xml.ReadAttribBool(xml.GetLocalRoot(), "f", false);
+        slot->SetFillSpace(fillSpace);
+
+        const float fillWeight = xml.ReadAttribFlt(xml.GetLocalRoot(), "fw", 1.0f);
+        slot->SetFillWeight(fillWeight);
+
+        float padding = xml.ReadAttribFlt(xml.GetLocalRoot(), "p", .0f);
+        slot->SetPadding(padding);
+        
+        xr_rect_f paddingRect = slot->GetPadding();
+        paddingRect.x1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pl", paddingRect.x1);
+        paddingRect.y1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pt", paddingRect.y1);
+        paddingRect.x2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pr", paddingRect.x2);
+        paddingRect.y2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pb", paddingRect.y2);
+        slot->SetPadding(paddingRect);
+        
+        xml.SetLocalRoot(boxNode);
+    }
+    return horizontalBox;
 }

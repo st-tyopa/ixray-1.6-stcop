@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "../xrCore/FormatParsers/XML/xrXMLParser.h"
 
+class CUIXHorizontalBox;
+class CUIXVerticalBox;
 class CUIXSwitcher;
 class CUIXBorder;
 class CUIXTextBlock;
@@ -26,4 +28,8 @@ public:
     static CUIXBorder* CreateBorder(CUIXml& xml, XML_NODE* borderNode, const shared_str& prefix);
 
     static CUIXSwitcher* CreateSwitcher(CUIXml& xml, XML_NODE* switcherNode, const shared_str& prefix);
+
+    static CUIXVerticalBox* CreateVerticalBox(CUIXml& xml, XML_NODE* boxNode, const shared_str& prefix);
+    
+    static CUIXHorizontalBox* CreateHorizontalBox(CUIXml& xml, XML_NODE* boxNode, const shared_str& prefix);
 };

@@ -31,26 +31,19 @@ void CUIXBorderSlot::RenderUIDebugProperties()
     if (ImGui::DragFloat4("Padding", reinterpret_cast<float*>(&padding), 1.0f))
     {
         SetPadding(xr_rect_f().set(padding.x, padding.y, padding.z, padding.w));
+        GetParent()->Rebuild();
     }
 }
 #endif
 
-void CUIXBorderSlot::SetPadding(const xr_rect_f& padding, bool forceRebuild)
+xr_vector2f CUIXBorderSlot::GetDesiredSize()
 {
-    m_padding = padding;
-    if (forceRebuild)
+    if (m_pWidget != nullptr)
     {
-        Rebuild();
+        const xr_vector2f widgetSize = m_pWidget->GetDesiredSize();
+        return xr_vector2f().set(widgetSize.x + m_padding.width(), widgetSize.y + m_padding.height());        
     }
-}
-
-void CUIXBorderSlot::SetPadding(float padding, bool forceRebuild)
-{
-    m_padding.set(padding, padding, padding, padding);
-    if (forceRebuild)
-    {
-        Rebuild();
-    }
+    return CUIXWidgetSlot::GetDesiredSize();
 }
 
 void CUIXBorderSlot::script_register(lua_State *L)
@@ -60,8 +53,8 @@ void CUIXBorderSlot::script_register(lua_State *L)
     module(L)
     [
         class_<CUIXBorderSlot, CUIXWidgetSlot>("CUIXBorderSlot")
-            .def("SetPadding", (void(CUIXBorderSlot::*)(const xr_rect_f&, bool))&CUIXBorderSlot::SetPadding)
-            .def("SetPadding", (void(CUIXBorderSlot::*)(float, bool))&CUIXBorderSlot::SetPadding)
+            .def("SetPadding", (void(CUIXBorderSlot::*)(const xr_rect_f&))&CUIXBorderSlot::SetPadding)
+            .def("SetPadding", (void(CUIXBorderSlot::*)(float))&CUIXBorderSlot::SetPadding)
             .def("GetPadding", &CUIXBorderSlot::GetPadding)
     ];
 }
@@ -108,6 +101,15 @@ CUIXWidgetSlot* CUIXBorder::AttachChild(CUIXWidget* widget)
     m_pSlot = new CUIXBorderSlot(this);
     m_pSlot->SetWidget(widget);
     return m_pSlot;
+}
+
+xr_vector2f CUIXBorder::GetDesiredSize()
+{
+    if (m_pSlot != nullptr)
+    {
+        return m_pSlot->GetDesiredSize();
+    }
+    return CUIXWidget::GetDesiredSize();
 }
 
 #ifdef DEBUG_DRAW

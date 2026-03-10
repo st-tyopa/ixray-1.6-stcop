@@ -29,6 +29,15 @@ void CUIXImage::RenderUIDebugProperties()
 }
 #endif
 
+xr_vector2f CUIXImage::GetDesiredSize()
+{
+    if (m_pBrush)
+    {
+        return m_pBrush->GetSize();
+    }
+    return inherited::GetDesiredSize();
+}
+
 void CUIXImage::script_register(lua_State *L)
 {
     using namespace luabind;

@@ -141,7 +141,9 @@ void CResourceManager::GetTextureResolution(LPCSTR pName, Fvector2& resolution)
 	{
 		return;    
 	}
-	map_TextureIt I = m_textures.find(pName);
+	string256 lowerName;
+	xr_strcpy(lowerName, pName);
+	map_TextureIt I = m_textures.find(strlwr(lowerName));
 	if (I != m_textures.end() )
 	{
 		if (!I->second->flags.bLoaded)

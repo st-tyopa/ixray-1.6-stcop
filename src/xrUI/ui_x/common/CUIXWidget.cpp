@@ -210,6 +210,15 @@ void CUIXWidgetSlot::Draw()
     }
 }
 
+xr_vector2f CUIXWidgetSlot::GetDesiredSize()
+{
+    if (m_pWidget != nullptr)
+    {
+        return m_pWidget->GetDesiredSize();
+    }
+    return CUIXElement::GetDesiredSize();
+}
+
 void CUIXWidgetSlot::script_register(lua_State *L)
 {
     using namespace luabind;

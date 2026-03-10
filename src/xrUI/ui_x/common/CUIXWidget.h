@@ -3,6 +3,10 @@
 #include "../../xrScripts/script_export_space.h"
 #include "../../xrScripts/script_space_forward.h"
 
+class CUIXHorizontalBox;
+class CUIXHorizontalBoxSlot;
+class CUIXVerticalBoxSlot;
+class CUIXVerticalBox;
 class CUIXSwitcherSlot;
 class CUIXBorderSlot;
 class CUIXCanvasSlot;
@@ -48,6 +52,8 @@ public:
     void SetRect(const xr_rect_f& rect) { m_absoluteRect = rect; }
     void SetRect(const float x1, const float y1, const float x2, const float y2) { m_absoluteRect.set(x1, y1, x2, y2); }
     const xr_rect_f& GetRect() const { return m_absoluteRect; }
+
+    virtual xr_vector2f GetDesiredSize() { return xr_vector2f().set(0.0f, 0.0f); }
     // ----------------------------------------------------------------
     // --- Script Register --------------------------------------------
     DECLARE_SCRIPT_REGISTER_FUNCTION
@@ -82,16 +88,20 @@ public:
 #endif
     // ----------------------------------------------------------------
     // --- Casting ----------------------------------------------------
-    virtual CUIXWidgetSlot*     ui_x_cast_widget_slot()     { return this; }
-    virtual CUIXCanvasSlot*     ui_x_cast_canvas_slot()     { return nullptr; }
-    virtual CUIXBorderSlot*     ui_x_cast_border_slot()     { return nullptr; }
-    virtual CUIXSwitcherSlot*   ui_x_cast_switcher_slot()   { return nullptr; }
+    virtual CUIXWidgetSlot*         ui_x_cast_widget_slot()         { return this; }
+    virtual CUIXCanvasSlot*         ui_x_cast_canvas_slot()         { return nullptr; }
+    virtual CUIXBorderSlot*         ui_x_cast_border_slot()         { return nullptr; }
+    virtual CUIXSwitcherSlot*       ui_x_cast_switcher_slot()       { return nullptr; }
+    virtual CUIXVerticalBoxSlot*    ui_x_cast_vertical_box_slot()   { return nullptr; }
+    virtual CUIXHorizontalBoxSlot*  ui_x_cast_horizontal_box_slot() { return nullptr; }
     // ----------------------------------------------------------------
     // --- Getters And Setters ----------------------------------------
     void            SetWidget       (CUIXWidget* widget);
     CUIXWidget*     GetWidget       () const { return m_pWidget; }
     
     CUIXWidget*     GetParent       () const { return m_pParent; }
+    
+    xr_vector2f GetDesiredSize() override;
     // ----------------------------------------------------------------
     // --- Script Register --------------------------------------------
     DECLARE_SCRIPT_REGISTER_FUNCTION
@@ -128,12 +138,14 @@ public:
 #endif
     // ----------------------------------------------------------------
     // --- Casting ----------------------------------------------------
-    virtual CUIXWidget*     ui_x_cast_widget()      { return this; }
-    virtual CUIXBorder*     ui_x_cast_border()      { return nullptr; }
-    virtual CUIXImage*      ui_x_cast_image()       { return nullptr; }
-    virtual CUIXTextBlock*  ui_x_cast_text()        { return nullptr; }
-    virtual CUIXCanvas*     ui_x_cast_canvas()      { return nullptr; } 
-    virtual CUIXSwitcher*   ui_x_cast_switcher()    { return nullptr; } 
+    virtual CUIXWidget*         ui_x_cast_widget()          { return this; }
+    virtual CUIXBorder*         ui_x_cast_border()          { return nullptr; }
+    virtual CUIXImage*          ui_x_cast_image()           { return nullptr; }
+    virtual CUIXTextBlock*      ui_x_cast_text()            { return nullptr; }
+    virtual CUIXCanvas*         ui_x_cast_canvas()          { return nullptr; } 
+    virtual CUIXSwitcher*       ui_x_cast_switcher()        { return nullptr; }
+    virtual CUIXVerticalBox*    ui_x_cast_vertical_box()    { return nullptr; }
+    virtual CUIXHorizontalBox*  ui_x_cast_horizontal_box()  { return nullptr; }
     // ----------------------------------------------------------------
     // --- Getters And Setters ----------------------------------------
     void SetName(const shared_str& name) override;

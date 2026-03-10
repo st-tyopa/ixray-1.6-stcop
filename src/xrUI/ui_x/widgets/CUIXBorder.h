@@ -24,9 +24,10 @@ public:
 #endif
     // ----------------------------------------------------------------
     // --- Getters And Setters ----------------------------------------
-    void SetPadding(const xr_rect_f& padding, bool forceRebuild = true);
-    void SetPadding(float padding, bool forceRebuild = true);
+    void SetPadding(const xr_rect_f& padding) { m_padding = padding; }
+    void SetPadding(const float padding) { m_padding.set(padding, padding, padding, padding); }
     const xr_rect_f& GetPadding() const { return m_padding; }
+    xr_vector2f GetDesiredSize() override;
     // ----------------------------------------------------------------
     // --- Script Register --------------------------------------------
     DECLARE_SCRIPT_REGISTER_FUNCTION
@@ -50,6 +51,9 @@ public:
     void Draw() override;
     void Rebuild() override;
     CUIXWidgetSlot* AttachChild(CUIXWidget* widget) override;
+    // ----------------------------------------------------------------
+    // --- Getters And Setters ----------------------------------------
+    xr_vector2f GetDesiredSize() override;
     // ----------------------------------------------------------------
     // --- Debug info -------------------------------------------------
 #ifdef DEBUG_DRAW

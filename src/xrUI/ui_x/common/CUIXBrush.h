@@ -51,7 +51,7 @@ public:
     void SetTint        (const u32 tint) { m_tint = tint; }
     u32 GetTint         () const { return m_tint; }
     
-    void SetSize        (const xr_vector2f& size) { m_size.set(size);}
+    void SetSize        (const xr_vector2f& size) { m_size.set(size); }
     xr_vector2f GetSize() const { return m_size; }
     
     void SetTile        (EUIXTiling tiling) { m_tile = tiling; }

@@ -1,62 +1,34 @@
 ﻿#pragma once
-#include "ui_x/UIXDefs.h"
 #include "ui_x/common/CUIXWidget.h"
-#include "../../xrScripts/script_export_space.h"
 
-class CUIXWidget;
-
-enum class EUIXAnchor : u8
-{
-    ltAnchor,
-    lcAnchor,
-    lbAnchor,
-    ctAnchor,
-    ccAnchor,
-    cbAnchor,
-    rtAnchor,
-    rcAnchor,
-    rbAnchor,
-    ftAnchor,
-    fcAnchor,
-    fbAnchor,
-    lfAnchor,
-    cfAnchor,
-    rfAnchor,
-    ffAnchor,
-};
-
-class CUIXCanvasSlot : public CUIXWidgetSlot
+class CUIXHorizontalBoxSlot : public CUIXWidgetSlot
 {
     using inherited = CUIXWidgetSlot;
 protected:
-    xr_vector2f m_size;
-    xr_vector2f m_position;
-    EUIXAnchor m_anchor = EUIXAnchor::ltAnchor;
-    xr_vector2f m_alignment;
-
+    xr_rect_f m_padding;
+    bool m_bFillSpace = false;
+    float m_fillWeight = 1.0f;
 public:
     // --- Constructors -----------------------------------------------
-    CUIXCanvasSlot(CUIXWidget* parent) : inherited("canvas_slot", parent) {}
-    ~CUIXCanvasSlot() override = default;
+    CUIXHorizontalBoxSlot(CUIXWidget* parent) : inherited("horz_box_slot", parent) {}
+    ~CUIXHorizontalBoxSlot() override = default;
     // ----------------------------------------------------------------
     // --- Casting ----------------------------------------------------
-    CUIXCanvasSlot* ui_x_cast_canvas_slot() override { return this; }
+    CUIXHorizontalBoxSlot* ui_x_cast_horizontal_box_slot() override { return this; }
     // ----------------------------------------------------------------
     // --- Control ----------------------------------------------------
     void Rebuild() override;
     // ----------------------------------------------------------------
     // --- Getters And Setters ----------------------------------------
-    void            SetAnchor       (EUIXAnchor anchor, bool forceRebuild = true);
-    EUIXAnchor      GetAnchor       () const { return m_anchor; }
-    
-    void            SetAlignment    (const xr_vector2f& alignment, bool forceRebuild = true);
-    xr_vector2f     GetAlignment    () const { return m_alignment; }
+    void SetPadding(const xr_rect_f& padding) { m_padding = padding; }
+    void SetPadding(const float padding) { m_padding.set(padding, padding, padding, padding); }
+    xr_rect_f GetPadding() const { return m_padding; }
 
-    void            SetPosition     (const xr_vector2f& position, bool forceRebuild = true);
-    xr_vector2f     GetPosition     () const { return m_position; }
-    
-    void            SetSize         (const xr_vector2f& size, bool forceRebuild = true);
-    xr_vector2f     GetSize         () const { return m_size; }
+    void SetFillSpace(bool fillSpace) { m_bFillSpace = fillSpace; }
+    bool GetFillSpace() const { return m_bFillSpace; }
+
+    void SetFillWeight(float fillWeight) { m_fillWeight = fillWeight; }
+    float GetFillWeight() const { return m_fillWeight; }
     // ----------------------------------------------------------------
     // --- Debug info -------------------------------------------------
 #ifdef DEBUG_DRAW
@@ -68,26 +40,23 @@ public:
     // ----------------------------------------------------------------
 };
 
-class CUIXCanvas : public CUIXWidget
+class CUIXHorizontalBox : public CUIXWidget
 {
     using inherited = CUIXWidget;
-    xr_list<CUIXCanvasSlot*> m_slots;
+protected:
+    xr_list<CUIXHorizontalBoxSlot*> m_slots;
 public:
     // --- Constructors -----------------------------------------------
-    CUIXCanvas() : inherited("canvas") {}
-    ~CUIXCanvas() override;
+    CUIXHorizontalBox() : inherited("horizontal_box") {}
+    ~CUIXHorizontalBox() override;
     // ----------------------------------------------------------------
     // --- Casting ----------------------------------------------------
-    CUIXCanvas* ui_x_cast_canvas() override { return this; } 
+    CUIXHorizontalBox* ui_x_cast_horizontal_box() override { return this; }
     // ----------------------------------------------------------------
     // --- Control ----------------------------------------------------
     void Draw() override;
     void Rebuild() override;
     CUIXWidgetSlot* AttachChild(CUIXWidget* widget) override;
-    // ----------------------------------------------------------------
-    // --- Input ------------------------------------------------------
-    bool OnMouseMove(int dx, int dy) override;
-    bool OnKeyboardPressed(int key) override;
     // ----------------------------------------------------------------
     // --- Debug info -------------------------------------------------
 #ifdef DEBUG_DRAW
@@ -97,5 +66,4 @@ public:
     // --- Script Register --------------------------------------------
     DECLARE_SCRIPT_REGISTER_FUNCTION
     // ----------------------------------------------------------------
-
 };
