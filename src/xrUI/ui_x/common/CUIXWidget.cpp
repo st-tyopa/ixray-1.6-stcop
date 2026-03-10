@@ -1,7 +1,9 @@
 ﻿#include "stdafx.h"
 #include "CUIXWidget.h"
 
-#include "imgui_internal.h"
+#include <json/json.hpp>
+#include <luabind/luabind.hpp>
+
 #include "ui_x/CUIXCore.h"
 
 xr_atomic_u32 CUIXElement::m_idGenerator;
@@ -50,12 +52,87 @@ void CUIXElement::RenderUIDebugProperties()
 }
 #endif
 
+void CUIXElement::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<CUIXElement>("CUIXElement")
+            .def("SetName", &CUIXElement::SetName)
+            .def("GetName", &CUIXElement::GetName)
+            .def("GetRect", &CUIXElement::GetRect)
+            .def("SetRect", (void (CUIXElement::*)(float, float, float, float))&CUIXElement::SetRect)
+            .def("SetRect", (void (CUIXElement::*)(const xr_rect_f&))&CUIXElement::SetRect)
+            .def("Rebuild", &CUIXElement::Rebuild)
+    ];
+}
+
 void CUIXWidgetSlot::Rebuild()
 {
     if (m_pWidget)
     {
         m_pWidget->SetRect(GetRect());
         m_pWidget->Rebuild();
+    }
+}
+
+bool CUIXWidgetSlot::OnMouseMove(int dx, int dy)
+{
+    if (m_pWidget)
+    {
+        return m_pWidget->OnMouseMove(dx, dy);
+    }
+    return false;
+}
+
+bool CUIXWidgetSlot::OnKeyboardPressed(int key)
+{
+    if (m_pWidget)
+    {
+        return m_pWidget->OnKeyboardPressed(key);
+    }
+    return false;
+}
+
+bool CUIXWidget::OnMouseMove(int dx, int dy)
+{
+    if (m_eVisibility != EUIXVisibility::Visible)
+    {
+        return false;
+    }
+    xr_vector2f cursorPosition = ui_x().GetCursorPosition();
+    if (GetRect().in(cursorPosition.x, cursorPosition.y))
+    {
+        for (auto& cb : m_mouseMoveCallbacks) {
+            if (cb.is_valid())
+            {
+                cb(dx, dy);
+            }
+        }    
+        return true;
+    }
+    return false;
+}
+
+bool CUIXWidget::OnKeyboardPressed(int key)
+{
+    for (auto& cb : m_keyboardPressedCallbacks) {
+        if (cb.is_valid())
+        {
+            cb(key);
+        }
+    }
+    return !m_keyboardPressedCallbacks.empty();
+}
+
+void CUIXWidget::OnFocusChanged(bool bIsFocused)
+{
+    for (auto& cb : m_focusChangedCallbacks) {
+        if (cb.is_valid())
+        {
+            cb(bIsFocused);
+        }
     }
 }
 
@@ -100,6 +177,16 @@ void CUIXWidget::RenderUIDebugProperties()
 }
 #endif
 
+void CUIXWidgetSlot::SetWidget(CUIXWidget* widget)
+{
+    if (m_pWidget != nullptr)
+    {
+        return;
+    }
+    m_pWidget = widget;
+    m_pWidget->SetParentSlot(this);
+}
+
 CUIXWidgetSlot::~CUIXWidgetSlot()
 {
     xr_delete(m_pWidget);
@@ -110,6 +197,78 @@ void CUIXWidgetSlot::Draw()
 {
     if (m_pWidget)
     {
-        m_pWidget->Draw();
+        switch (m_pWidget->GetVisibility())
+        {
+            case EUIXVisibility::Visible:
+            case EUIXVisibility::NonHit:
+            case EUIXVisibility::NonHitWithChild:
+                m_pWidget->Draw();
+                return;
+            default:
+                return;
+        }
     }
 }
+
+void CUIXWidgetSlot::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<CUIXWidgetSlot, CUIXElement>("CUIXWidgetSlot")
+            .def("SetWidget", &CUIXWidgetSlot::SetWidget)
+            .def("GetWidget", &CUIXWidgetSlot::GetWidget)
+            .def("GetParent", &CUIXWidgetSlot::GetParent)
+    ];
+}
+
+void CUIXWidget::SetName(const shared_str& name)
+{
+    if (!GetName().empty() && g_uiXCore)
+    {
+        g_uiXCore->UnregisterWidgetId(GetName().c_str());
+    }
+    inherited::SetName(name.c_str()); 
+    if (!GetName().empty() && g_uiXCore)
+    {
+        g_uiXCore->RegisterWidgetId(GetName().c_str(), this);
+    }
+}
+
+void CUIXWidget::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<CUIXWidget, CUIXElement>("CUIXWidget")
+            .def("AttachChild", &CUIXWidget::AttachChild)
+            .def("SetParentSlot", &CUIXWidget::SetParentSlot)
+            .def("GetParentSlot", &CUIXWidget::GetParentSlot)
+            .def("SetVisibility", &CUIXWidget::SetVisibility)
+            .def("GetVisibility", &CUIXWidget::GetVisibility)
+            .def("SetRenderTransform", &CUIXWidget::SetRenderTransform)
+            .def("GetRenderTransform", &CUIXWidget::GetRenderTransform)
+            .def("BindMouseMoveCallback", &CUIXWidget::BindMouseMoveCallback)
+            .def("BindKeyboardPressedCallback", &CUIXWidget::BindKeyboardPressedCallback)
+            .def("BindFocusChangedCallback", &CUIXWidget::BindFocusChangedCallback)
+    ];
+}
+
+void CUIXWidget::BindMouseMoveCallback(const luabind::functor<void>& func)
+{
+    m_mouseMoveCallbacks.push_back(func);
+}
+
+void CUIXWidget::BindKeyboardPressedCallback(const luabind::functor<void>& func)
+{
+    m_keyboardPressedCallbacks.push_back(func);
+}
+
+void CUIXWidget::BindFocusChangedCallback(const luabind::functor<void>& func)
+{
+    m_focusChangedCallbacks.push_back(func);
+}
+
+

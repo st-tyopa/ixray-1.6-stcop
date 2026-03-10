@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "CUIXImage.h"
+#include <luabind/luabind.hpp>
 
 #include "ui_x/common/CUIXBrush.h"
 
@@ -27,3 +28,14 @@ void CUIXImage::RenderUIDebugProperties()
     inherited::RenderUIDebugProperties();
 }
 #endif
+
+void CUIXImage::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<CUIXImage, CUIXWidget>("CUIXImage")
+            .def("GetBrush", &CUIXImage::GetBrush)
+    ];
+}

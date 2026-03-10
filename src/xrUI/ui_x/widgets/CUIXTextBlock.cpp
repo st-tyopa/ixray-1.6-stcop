@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "CUIXTextBlock.h"
+#include <luabind/luabind.hpp>
 
 #include "../xrEngine/string_table.h"
 
@@ -291,6 +292,28 @@ void CUIXTextBlock::RenderUIDebugProperties()
     inherited::RenderUIDebugProperties();
 }
 #endif
+
+void CUIXTextBlock::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<CUIXTextBlock, CUIXWidget>("CUIXTextBlock")
+            .def("Rebuild",         &CUIXTextBlock::Rebuild)
+            .def("SetText",         &CUIXTextBlock::SetText)
+            .def("GetText",         &CUIXTextBlock::GetText)
+            .def("SetFont",         &CUIXTextBlock::SetFont)
+            .def("GetFont",         &CUIXTextBlock::GetFont)
+            .def("SetColor",        (void(CUIXTextBlock::*)(u8, u8, u8, u8))&CUIXTextBlock::SetColor)
+            .def("SetColor",        (void(CUIXTextBlock::*)(const u32&))&CUIXTextBlock::SetColor)
+            .def("GetColor",        &CUIXTextBlock::GetColor)
+            .def("SetAlignVert",    &CUIXTextBlock::SetAlignVert)
+            .def("GetAlignVert",    &CUIXTextBlock::GetAlignVert)
+            .def("SetAlignHorz",    &CUIXTextBlock::SetAlignHorz)
+            .def("GetAlignHorz",    &CUIXTextBlock::GetAlignHorz)
+    ];
+}
 
 xr_string CUIXTextBlock::ReadAttr(const xr_string& tagBody, const xr_string& atrrName, const xr_string& defaultValue)
 {

@@ -149,6 +149,7 @@ void CGamePersistent::OnAppStart()
 	init_game_globals			();
 	inherited::OnAppStart			();
 	g_uiXCore					= new CUIXCore();
+	g_uiXCore->Load				();
 	m_pUI_core					= new ui_core();
 	m_pMainMenu					= new CMainMenu();
 }

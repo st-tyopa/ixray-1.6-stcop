@@ -1,13 +1,14 @@
 ﻿#include "stdafx.h"
 #include "CUIXBrush.h"
+#include <luabind/luabind.hpp>
 
+#include "UITextureMaster.h"
 #include "ui_defs.h"
 #include "../CUIXCore.h"
 #include "../Include/xrRender/UIShader.h"
 
 CUIXBrush::CUIXBrush()
 {
-    bHasSize = false;
     m_tint = 0xFFFFFFFF; // white default
     m_tile = EUIXTiling::none;
     m_drawType = EUIXDrawType::image;
@@ -17,7 +18,6 @@ CUIXBrush::CUIXBrush()
 
 CUIXBrush::CUIXBrush(shared_str const& textureName)
 {
-    bHasSize = false;
     m_tint = 0xFFFFFFFF; // white default
     m_tile = EUIXTiling::none;
     m_drawType = EUIXDrawType::image;
@@ -27,7 +27,6 @@ CUIXBrush::CUIXBrush(shared_str const& textureName)
 
 CUIXBrush::CUIXBrush(shared_str const& textureName, shared_str const& shaderName)
 {
-    bHasSize = false;
     m_tint = 0xFFFFFFFF; // white default
     m_tile = EUIXTiling::none;
     m_drawType = EUIXDrawType::image;
@@ -39,11 +38,19 @@ void CUIXBrush::CreateShader(shared_str const& textureName, shared_str const& sh
 {
     m_shader->create(shaderName.c_str(),textureName.c_str());
     
-    if (!bHasSize)
+    xr_rect_f textureRect;
+    if (CUITextureMaster::InitTexture(textureName, shaderName, m_shader, textureRect))
     {
-        xr_vector2f size;
-        UIRender->GetTextureResolution(textureName.c_str(), size);
-        SetSize(size);
+        xr_vector2f fileSize;
+        UIRender->GetTextureResolution(CUITextureMaster::GetTextureFileName(textureName.c_str()), fileSize);
+        m_uv = textureRect;
+        m_uv.div(fileSize.x, fileSize.y);
+        SetSize(xr_vector2f().set(textureRect.width(), textureRect.height()));
+    }
+    else
+    {
+        m_uv.set(0.0f, 0.0f, 1.0f, 1.0f);
+        SetSize(xr_vector2f().set(32.0f, 32.0f));
     }
     
 #ifdef DEBUG_DRAW
@@ -56,7 +63,7 @@ void CUIXBrush::Render(const xr_rect_f& drawRect, const FUIXRenderTransform& ren
 {
     VERIFY						(g_bRendering);
     UIRender->SetShader			(*m_shader);
-    UIRender->StartPrimitive	(32, IUIRender::ptTriList, ui_x().m_eCurrentPointType);
+    UIRender->StartPrimitive	(6, IUIRender::ptTriList, IUIRender::pttTL);
     RenderInternal				(drawRect, renderTransform);
     UIRender->FlushPrimitive	();    
 }
@@ -115,23 +122,59 @@ void CUIXBrush::RenderUIDebugProperties()
 }
 #endif
 
+void CUIXBrush::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<EUIXDrawType>("EDrawType")
+            .enum_("constants")
+            [
+                value("None",   EUIXDrawType::none),
+                value("Box",    EUIXDrawType::box),
+                value("Border", EUIXDrawType::border),
+                value("Image",  EUIXDrawType::image)
+            ],
+        class_<EUIXTiling>("ETiling")
+            .enum_("constants")
+            [
+                value("None",       EUIXTiling::none),
+                value("Vertical",   EUIXTiling::vertical),
+                value("Horizontal", EUIXTiling::horizontal),
+                value("Both",       EUIXTiling::both)
+            ],
+        class_<CUIXBrush>("CUIXBrush")
+            .def("CreateShader", &CUIXBrush::CreateShader)
+            .def("SetTint", (void (CUIXBrush::*)(u8, u8, u8, u8))&CUIXBrush::SetTint)
+            .def("SetTint", (void (CUIXBrush::*)(u32))&CUIXBrush::SetTint)
+            .def("GetTint", &CUIXBrush::GetTint)
+            .def("SetSize", &CUIXBrush::SetSize)
+            .def("GetSize", &CUIXBrush::GetSize)
+            .def("SetTile", &CUIXBrush::SetTile)
+            .def("GetTile", &CUIXBrush::GetTile)
+            .def("SetDrawType", &CUIXBrush::SetDrawType)
+            .def("GetDrawType", &CUIXBrush::GetDrawType)
+    ];
+}
+
 void CUIXBrush::RenderInternal(const xr_rect_f& drawRect, const FUIXRenderTransform& renderTransform)
 {
     xr_vector2f textureSize;
     UIRender->GetActiveTextureResolution(textureSize);    
     
-    xr_vector2f uvLT = xr_vector2f().set(0.0f, 0.0f);
+    xr_vector2f uvLT = m_uv.lt;
     xr_vector2f uvRB;
     
     switch (m_tile)
     {
     case EUIXTiling::vertical:
         {
-            uvRB.set(1.0f, drawRect.height() / m_size.y);
+            uvRB.set(m_uv.x2, drawRect.height() / m_size.y);
         } break;
     case EUIXTiling::horizontal:
         {
-            uvRB.set(drawRect.width() / m_size.x, 1.0f); 
+            uvRB.set(drawRect.width() / m_size.x, m_uv.y2);  
         } break;
     case EUIXTiling::both:
         {
@@ -139,7 +182,7 @@ void CUIXBrush::RenderInternal(const xr_rect_f& drawRect, const FUIXRenderTransf
         } break;
     default:
         {
-            uvRB.set(1.0f, 1.0f);    
+            uvRB = m_uv.rb;   
         } break;
         
     }
@@ -149,14 +192,10 @@ void CUIXBrush::RenderInternal(const xr_rect_f& drawRect, const FUIXRenderTransf
     
 
     const xr_vector2f pivot = xr_vector2f().set(renderTransform.pivot.x * drawRect.width(), renderTransform.pivot.y * drawRect.height());
-    //const xr_vector2f offset = xr_vector2f().set(300.0f, 300.0f);
     
     // clip poly
     CUIXPoly2dSafe poly;
     poly.resize(4);
-
-    //iFloor(inPosition.x);
-    //iFloor(inPosition.y);
     
     // LT
     poly[0].Set		    (0.0f,0.0f,uvLT.x,uvLT.y);
@@ -178,17 +217,10 @@ void CUIXBrush::RenderInternal(const xr_rect_f& drawRect, const FUIXRenderTransf
     poly[3].RotatePt	(pivot,cos_a,sin_a);
     poly[3].pt.add		(drawRect.lt);
 
-
-
-    CUIXPoly2dSafe dest;
-    CUIXPoly2dSafe* to_render = ui_x().frustum().ClipPoly(poly, dest);
-    if (to_render && to_render->size())
-    {
-        for (u32 k=0; k<to_render->size()-2; k++)
-        {
-            UIRender->PushPoint((*to_render)[0+0].pt.x, (*to_render)[0+0].pt.y,	0, m_tint, (*to_render)[0+0].uv.x, (*to_render)[0+0].uv.y);
-            UIRender->PushPoint((*to_render)[k+1].pt.x, (*to_render)[k+1].pt.y,	0, m_tint, (*to_render)[k+1].uv.x, (*to_render)[k+1].uv.y);
-            UIRender->PushPoint((*to_render)[k+2].pt.x, (*to_render)[k+2].pt.y,	0, m_tint, (*to_render)[k+2].uv.x, (*to_render)[k+2].uv.y);
-        }
-    }
+    UIRender->PushPoint(poly[0].pt.x, poly[0].pt.y, 0, m_tint, poly[0].uv.x, poly[0].uv.y);
+    UIRender->PushPoint(poly[1].pt.x, poly[1].pt.y, 0, m_tint, poly[1].uv.x, poly[1].uv.y);
+    UIRender->PushPoint(poly[2].pt.x, poly[2].pt.y, 0, m_tint, poly[2].uv.x, poly[2].uv.y);
+    UIRender->PushPoint(poly[0].pt.x, poly[0].pt.y, 0, m_tint, poly[0].uv.x, poly[0].uv.y);
+    UIRender->PushPoint(poly[2].pt.x, poly[2].pt.y, 0, m_tint, poly[2].uv.x, poly[2].uv.y);
+    UIRender->PushPoint(poly[3].pt.x, poly[3].pt.y, 0, m_tint, poly[3].uv.x, poly[3].uv.y);
 }

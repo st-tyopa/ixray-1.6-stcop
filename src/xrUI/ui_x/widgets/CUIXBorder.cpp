@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "CUIXBorder.h"
+#include <luabind/luabind.hpp>
 
 #include "ui_x/common/CUIXBrush.h"
 
@@ -52,6 +53,19 @@ void CUIXBorderSlot::SetPadding(float padding, bool forceRebuild)
     }
 }
 
+void CUIXBorderSlot::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<CUIXBorderSlot, CUIXWidgetSlot>("CUIXBorderSlot")
+            .def("SetPadding", (void(CUIXBorderSlot::*)(const xr_rect_f&, bool))&CUIXBorderSlot::SetPadding)
+            .def("SetPadding", (void(CUIXBorderSlot::*)(float, bool))&CUIXBorderSlot::SetPadding)
+            .def("GetPadding", &CUIXBorderSlot::GetPadding)
+    ];
+}
+
 CUIXBorder::~CUIXBorder()
 {
     if (m_pSlot)
@@ -85,6 +99,17 @@ void CUIXBorder::Rebuild()
     }
 }
 
+CUIXWidgetSlot* CUIXBorder::AttachChild(CUIXWidget* widget)
+{
+    if (m_pSlot != nullptr)
+    {
+        return nullptr;
+    }
+    m_pSlot = new CUIXBorderSlot(this);
+    m_pSlot->SetWidget(widget);
+    return m_pSlot;
+}
+
 #ifdef DEBUG_DRAW
 void CUIXBorder::RenderUIDebugNodeChild()
 {
@@ -95,13 +120,12 @@ void CUIXBorder::RenderUIDebugNodeChild()
 }
 #endif
 
-CUIXBorderSlot* CUIXBorder::AttachChild(CUIXWidget* widget)
+void CUIXBorder::script_register(lua_State *L)
 {
-    if (m_pSlot != nullptr)
-    {
-        return nullptr;
-    }
-    m_pSlot = new CUIXBorderSlot(this);
-    m_pSlot->SetWidget(widget);
-    return m_pSlot;
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<CUIXBorder, CUIXWidget>("CUIXBorder")
+    ];
 }

@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "CUIXCanvas.h"
+#include <luabind/luabind.hpp>
 
 void CUIXCanvasSlot::Rebuild()
 {
@@ -183,6 +184,37 @@ void CUIXCanvasSlot::SetSize(const xr_vector2f& size, bool forceRebuild)
     }
 }
 
+void CUIXCanvasSlot::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<EUIXAnchor>("EUIXAnchor")
+            .enum_("constants")
+            [
+                value("lt", EUIXAnchor::ltAnchor), value("lc", EUIXAnchor::lcAnchor), value("lb", EUIXAnchor::lbAnchor),
+                value("ct", EUIXAnchor::ctAnchor), value("cc", EUIXAnchor::ccAnchor), value("cb", EUIXAnchor::cbAnchor),
+                value("rt", EUIXAnchor::rtAnchor), value("rc", EUIXAnchor::rcAnchor), value("rb", EUIXAnchor::rbAnchor),
+                value("ft", EUIXAnchor::ftAnchor), value("fc", EUIXAnchor::fcAnchor), value("fb", EUIXAnchor::fbAnchor),
+                value("lf", EUIXAnchor::lfAnchor), value("cf", EUIXAnchor::cfAnchor), value("rf", EUIXAnchor::rfAnchor),
+                value("ff", EUIXAnchor::ffAnchor)
+            ],
+        class_<CUIXCanvasSlot, CUIXWidgetSlot>("CUIXCanvasSlot")
+            .def("SetAnchor",    &CUIXCanvasSlot::SetAnchor)
+            .def("GetAnchor",    &CUIXCanvasSlot::GetAnchor)
+                
+            .def("SetAlignment", &CUIXCanvasSlot::SetAlignment)
+            .def("GetAlignment", &CUIXCanvasSlot::GetAlignment)
+                
+            .def("SetPosition",  &CUIXCanvasSlot::SetPosition)
+            .def("GetPosition",  &CUIXCanvasSlot::GetPosition)
+                
+            .def("SetSize",      &CUIXCanvasSlot::SetSize)
+            .def("GetSize",      &CUIXCanvasSlot::GetSize)
+    ];
+}
+
 CUIXCanvas::~CUIXCanvas()
 {
     for (CUIXCanvasSlot* slot : m_slots)
@@ -219,12 +251,53 @@ void CUIXCanvas::RenderUIDebugNodeChild()
 }
 #endif
 
-CUIXCanvasSlot* CUIXCanvas::AttachChild(CUIXWidget* widget)
+CUIXWidgetSlot* CUIXCanvas::AttachChild(CUIXWidget* widget)
 {
     CUIXCanvasSlot* child = new CUIXCanvasSlot(this);
     m_slots.push_back(child);
     child->SetWidget(widget);
-    // todo: ui_x: set widget parent slot ???
-    // todo: ui_x: set widget parent ???
     return child;
+}
+
+bool CUIXCanvas::OnMouseMove(int dx, int dy)
+{
+    if (m_eVisibility == EUIXVisibility::NonHit || inherited::OnMouseMove(dx, dy))
+    {
+        auto it = m_slots.rbegin();
+        auto it_end = m_slots.rend();
+        for (; it != it_end; ++it)
+        {
+            if ((*it)->OnMouseMove(dx, dy))
+            {
+                return true;
+            }   
+        }
+    }
+    return false;
+}
+
+bool CUIXCanvas::OnKeyboardPressed(int key)
+{
+    if (inherited::OnKeyboardPressed(key))
+    {
+        return true;
+    }
+    for (CUIXCanvasSlot* slot : m_slots)
+    {
+        if (slot->OnKeyboardPressed(key))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void CUIXCanvas::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    module(L)
+    [
+        class_<CUIXCanvas, CUIXWidget>("CUIXCanvas")
+    ];
 }

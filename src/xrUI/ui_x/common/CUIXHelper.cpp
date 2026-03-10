@@ -5,11 +5,12 @@
 #include "xrUIXmlParser.h"
 #include "../xrEngine/string_table.h"
 #include "ui_x/panels/CUIXCanvas.h"
+#include "ui_x/panels/CUIXSwitcher.h"
 #include "ui_x/widgets/CUIXBorder.h"
 #include "ui_x/widgets/CUIXImage.h"
 #include "ui_x/widgets/CUIXTextBlock.h"
 
-CUIXWidget* CUIXHelper::CreateWidget(CUIXml& xml, string_path path)
+CUIXWidget* CUIXHelper::CreateWidget(CUIXml& xml, string_path path, const shared_str& prefix)
 {
     if (XML_NODE* node = xml.NavigateToNode(path, 0))
     {
@@ -19,31 +20,44 @@ CUIXWidget* CUIXHelper::CreateWidget(CUIXml& xml, string_path path)
         CUIXWidget* widget = nullptr;
         if (nodeName == "canvas")
         {
-            widget = CreateCanvas(xml, node)->ui_x_cast_widget();
+            widget = CreateCanvas(xml, node, prefix)->ui_x_cast_widget();
         }
         else if (nodeName == "image")
         {
-            widget = CreateImage(xml, node)->ui_x_cast_widget();
+            widget = CreateImage(xml, node, prefix)->ui_x_cast_widget();
         }
         else if (nodeName == "text")
         {
-            widget =  CreateTextBlock(xml, node)->ui_x_cast_widget();
+            widget =  CreateTextBlock(xml, node, prefix)->ui_x_cast_widget();
         }
         else if (nodeName == "border")
         {
-            widget =  CreateBorder(xml, node)->ui_x_cast_widget();
+            widget =  CreateBorder(xml, node, prefix)->ui_x_cast_widget();
+        }
+        else if (nodeName == "switcher")
+        {
+            widget =  CreateSwitcher(xml, node, prefix)->ui_x_cast_widget();
         }
         
         if (widget && widgetId != "_")
         {
-            widget->SetName(widgetId.c_str());
+            if (prefix.size() > 0)
+            {
+                string64 buf;
+                xr_sprintf(buf, "%s:%s", prefix.c_str(), widgetId.c_str());
+                widget->SetName(buf);   
+            }
+            else
+            {
+                widget->SetName(widgetId.c_str());
+            }
         }
         return widget;
     }
     return nullptr;
 }
 
-CUIXCanvas* CUIXHelper::CreateCanvas(CUIXml& xml, XML_NODE* canvasNode)
+CUIXCanvas* CUIXHelper::CreateCanvas(CUIXml& xml, XML_NODE* canvasNode, const shared_str& prefix)
 {
     //
     CUIXCanvas* canvas = new CUIXCanvas();
@@ -53,8 +67,6 @@ CUIXCanvas* CUIXHelper::CreateCanvas(CUIXml& xml, XML_NODE* canvasNode)
     canvas->SetRect(0.0f, 0.0f, size.x, size.y);
 
     const int slotCount = xml.GetNodesNum(canvasNode, "canvas_slot");
-    //string_path slotPath;
-    //xr_strconcat(slotPath, path, ":canvas_slot");
     for (int i = 0; i < slotCount; i++)
     {
         // read child widget
@@ -63,17 +75,17 @@ CUIXCanvas* CUIXHelper::CreateCanvas(CUIXml& xml, XML_NODE* canvasNode)
         {
             continue;
         }
+        
         xml.SetLocalRoot(slotNode);
-        //string_path childPath;
-        //xr_strconcat(childPath, path, ":canvas_slot:",node->FirstChild()->Value());
-        CUIXWidget* widget = CreateWidget(xml, xr_strdup(slotNode->FirstChild()->Value()));
+        CUIXWidget* widget = CreateWidget(xml, xr_strdup(slotNode->FirstChild()->Value()), prefix);
         if (widget == nullptr)
         {
             continue;
         }
+        
         // setup canvas slot 
         xml.SetLocalRoot(slotNode);
-        CUIXCanvasSlot* slot = canvas->AttachChild(widget);
+        CUIXCanvasSlot* slot = canvas->AttachChild(widget)->ui_x_cast_canvas_slot();
         
         xr_vector2f slotSize;
         slotSize.x = xml.ReadAttribFlt(xml.GetLocalRoot(), "w", 64.0f);
@@ -117,7 +129,7 @@ CUIXCanvas* CUIXHelper::CreateCanvas(CUIXml& xml, XML_NODE* canvasNode)
     return canvas;
 }
 
-CUIXImage* CUIXHelper::CreateImage(CUIXml& xml, XML_NODE* imageNode)
+CUIXImage* CUIXHelper::CreateImage(CUIXml& xml, XML_NODE* imageNode, const shared_str& prefix)
 {
     CUIXImage* image;// = nullptr;
     if (XML_NODE* node = xml.NavigateToNode("brush", 0))
@@ -150,7 +162,7 @@ CUIXImage* CUIXHelper::CreateImage(CUIXml& xml, XML_NODE* imageNode)
     return image;
 }
 
-CUIXTextBlock* CUIXHelper::CreateTextBlock(CUIXml& xml, XML_NODE* textNode)
+CUIXTextBlock* CUIXHelper::CreateTextBlock(CUIXml& xml, XML_NODE* textNode, const shared_str& prefix)
 {
     CUIXTextBlock* textBlock = new CUIXTextBlock();
     if (XML_NODE* node = xml.NavigateToNode("brush", 0))
@@ -180,7 +192,7 @@ CUIXTextBlock* CUIXHelper::CreateTextBlock(CUIXml& xml, XML_NODE* textNode)
     return textBlock;
 }
 
-CUIXBorder* CUIXHelper::CreateBorder(CUIXml& xml, XML_NODE* borderNode)
+CUIXBorder* CUIXHelper::CreateBorder(CUIXml& xml, XML_NODE* borderNode, const shared_str& prefix)
 {
     CUIXBorder* border;
     if (XML_NODE* node = xml.NavigateToNode("brush", 0))
@@ -210,40 +222,59 @@ CUIXBorder* CUIXHelper::CreateBorder(CUIXml& xml, XML_NODE* borderNode)
         border = new CUIXBorder(new CUIXBrush());
     }
 
-    const int slotCount = xml.GetNodesNum(borderNode, "border_slot");
+    if (XML_NODE* slotNode = xml.NavigateToNode("border_slot", 0))
+    {
+        xml.SetLocalRoot(slotNode);
+        if (CUIXWidget* widget = CreateWidget(xml, xr_strdup(slotNode->FirstChild()->Value()), prefix))
+        {
+            // setup slot 
+            xml.SetLocalRoot(slotNode);
+            CUIXBorderSlot* slot = border->AttachChild(widget)->ui_x_cast_border_slot();
+        
+            float padding = xml.ReadAttribFlt(xml.GetLocalRoot(), "p", 2.0f);
+            slot->SetPadding(padding, false);
+        
+            xr_rect_f paddingRect = slot->GetPadding();
+            paddingRect.x1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pl", paddingRect.x1);
+            paddingRect.y1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pt", paddingRect.y1);
+            paddingRect.x2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pr", paddingRect.x2);
+            paddingRect.y2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pb", paddingRect.y2);
+            slot->SetPadding(paddingRect, false);
+
+            slot->Rebuild();
+
+            xml.SetLocalRoot(borderNode);   
+        }
+    }
+    
+    return border;
+}
+
+CUIXSwitcher* CUIXHelper::CreateSwitcher(CUIXml& xml, XML_NODE* switcherNode, const shared_str& prefix)
+{
+    CUIXSwitcher* switcher = new CUIXSwitcher();
+    const int slotCount = xml.GetNodesNum(switcherNode, "switcher_slot");
     for (int i = 0; i < slotCount; i++)
     {
         // read child widget
-        XML_NODE* slotNode = xml.NavigateToNode("border_slot", i);
-        if (slotNode->FirstChild() == nullptr)
+        XML_NODE* slotNode = xml.NavigateToNode("switcher_slot", i);
+        if (slotNode == nullptr || slotNode->FirstChild() == nullptr)
         {
             continue;
         }
         xml.SetLocalRoot(slotNode);
-        CUIXWidget* widget = CreateWidget(xml, xr_strdup(slotNode->FirstChild()->Value()));
+        CUIXWidget* widget = CreateWidget(xml, xr_strdup(slotNode->FirstChild()->Value()), prefix);
         if (widget == nullptr)
         {
             continue;
         }
-        // setup slot 
+        // setup canvas slot 
         xml.SetLocalRoot(slotNode);
-        CUIXBorderSlot* slot = border->AttachChild(widget);
-        
-        float padding = xml.ReadAttribFlt(xml.GetLocalRoot(), "p", 2.0f);
-        slot->SetPadding(padding, false);
-        
-        xr_rect_f paddingRect = slot->GetPadding();
-        paddingRect.x1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pl", paddingRect.x1);
-        paddingRect.y1 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pt", paddingRect.y1);
-        paddingRect.x2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pr", paddingRect.x2);
-        paddingRect.y2 = xml.ReadAttribFlt(xml.GetLocalRoot(), "pb", paddingRect.y2);
-        slot->SetPadding(paddingRect, false);
-
+        CUIXSwitcherSlot* slot = switcher->AttachChild(widget)->ui_x_cast_switcher_slot();
         slot->Rebuild();
-
-        xml.SetLocalRoot(borderNode);
+        
+        xml.SetLocalRoot(switcherNode);
     }
-    
-    
-    return border;
+
+    return switcher;
 }

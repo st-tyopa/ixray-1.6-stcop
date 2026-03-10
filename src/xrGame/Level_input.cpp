@@ -27,6 +27,7 @@
 //Alundaio
 #include "pch_script.h"
 #include "../../xrScripts/script_engine.h" 
+#include "../xrUI/ui_x/CUIXCore.h"
 using namespace luabind;
 //-Alundaio
 
@@ -86,6 +87,11 @@ void CLevel::IR_OnMouseMove( int dx, int dy )
 	if (g_actor) g_actor->callback(GameObject::eMouseMove)(dx, dy);
 	/* avo: end */
 
+	if (g_uiXCore && g_uiXCore->IsReceiveMouseInput())
+	{
+		g_uiXCore->OnMouseMove(dx, dy);
+		return;
+	}
 	if (CurrentGameUI()->IR_UIOnMouseMove(dx,dy))		return;
 	if (Device.Paused() && !IsDemoPlay() 
 #ifdef DEBUG
@@ -161,10 +167,17 @@ void CLevel::IR_OnKeyboardPress	(int key)
 			return;
 		}
 	}
-
+	
 	if (g_actor)
 		g_actor->callback(GameObject::eKeyPress)(key);
 
+	
+	if (g_uiXCore && g_uiXCore->IsReceiveKeyBoardInput())
+	{
+		g_uiXCore->OnKeyboardPress(key);
+		return;
+	}
+	
 	switch ( _curr ) 
 	{
 
@@ -202,7 +215,7 @@ void CLevel::IR_OnKeyboardPress	(int key)
 		}
 	}break;
 	};
-
+	
 	if ( !bReady || !b_ui_exist )			return;
 
 	if ( b_ui_exist && CurrentGameUI()->IR_UIOnKeyboardPress(key)) return;
@@ -510,6 +523,12 @@ void CLevel::IR_OnKeyboardRelease(int key)
 			return;
 		}
 	}
+	
+	if (g_uiXCore && g_uiXCore->IsReceiveKeyBoardInput())
+	{
+		g_uiXCore->OnKeyboardRelease(key);
+		return;
+	}
 
 	if (!bReady || g_bDisableAllInput	)								return;
 	if ( CurrentGameUI() && CurrentGameUI()->IR_UIOnKeyboardRelease(key)) return;
@@ -581,6 +600,13 @@ void CLevel::IR_OnKeyboardHold(int key)
 	}
 
 #endif // DEBUG
+
+	
+	if (g_uiXCore && g_uiXCore->IsReceiveKeyBoardInput())
+	{
+		g_uiXCore->OnKeyboardHold(key);
+		return;
+	}
 
 	if (CurrentGameUI() && CurrentGameUI()->IR_UIOnKeyboardHold(key)) return;
 	if (Device.Paused() && !Level().IsDemoPlay() 

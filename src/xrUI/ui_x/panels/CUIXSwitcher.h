@@ -1,84 +1,40 @@
 ﻿#pragma once
-#include "ui_x/UIXDefs.h"
 #include "ui_x/common/CUIXWidget.h"
 #include "../../xrScripts/script_export_space.h"
 
-class CUIXWidget;
-
-enum class EUIXAnchor : u8
-{
-    ltAnchor,
-    lcAnchor,
-    lbAnchor,
-    ctAnchor,
-    ccAnchor,
-    cbAnchor,
-    rtAnchor,
-    rcAnchor,
-    rbAnchor,
-    ftAnchor,
-    fcAnchor,
-    fbAnchor,
-    lfAnchor,
-    cfAnchor,
-    rfAnchor,
-    ffAnchor,
-};
-
-class CUIXCanvasSlot : public CUIXWidgetSlot
+class CUIXSwitcherSlot : public CUIXWidgetSlot
 {
     using inherited = CUIXWidgetSlot;
-protected:
-    xr_vector2f m_size;
-    xr_vector2f m_position;
-    EUIXAnchor m_anchor = EUIXAnchor::ltAnchor;
-    xr_vector2f m_alignment;
-
 public:
     // --- Constructors -----------------------------------------------
-    CUIXCanvasSlot(CUIXWidget* parent) : inherited("canvas_slot", parent) {}
-    ~CUIXCanvasSlot() override = default;
+    CUIXSwitcherSlot(CUIXWidget* parent) : inherited("switcher_slot", parent) {}
+    ~CUIXSwitcherSlot() override = default;
     // ----------------------------------------------------------------
     // --- Casting ----------------------------------------------------
-    CUIXCanvasSlot* ui_x_cast_canvas_slot() override { return this; }
+    CUIXSwitcherSlot* ui_x_cast_switcher_slot() override { return this; }
     // ----------------------------------------------------------------
     // --- Control ----------------------------------------------------
     void Rebuild() override;
     // ----------------------------------------------------------------
     // --- Debug info -------------------------------------------------
 #ifdef DEBUG_DRAW
-    void RenderUIDebugProperties() override;
+    void RenderUIDebugProperties() override {}
 #endif
-    // ----------------------------------------------------------------
-    // --- Getters And Setters ----------------------------------------
-    void            SetAnchor       (EUIXAnchor anchor, bool forceRebuild = true);
-    EUIXAnchor      GetAnchor       () const { return m_anchor; }
-    
-    void            SetAlignment    (const xr_vector2f& alignment, bool forceRebuild = true);
-    xr_vector2f     GetAlignment    () const { return m_alignment; }
-
-    void            SetPosition     (const xr_vector2f& position, bool forceRebuild = true);
-    xr_vector2f     GetPosition     () const { return m_position; }
-    
-    void            SetSize         (const xr_vector2f& size, bool forceRebuild = true);
-    xr_vector2f     GetSize         () const { return m_size; }
     // ----------------------------------------------------------------
     // --- Script Register --------------------------------------------
     DECLARE_SCRIPT_REGISTER_FUNCTION
     // ----------------------------------------------------------------
 };
 
-class CUIXCanvas : public CUIXWidget
+class CUIXSwitcher: public CUIXWidget
 {
     using inherited = CUIXWidget;
-    xr_list<CUIXCanvasSlot*> m_slots;
+    u8 m_activeSlotIndex = 0;
+    xr_vector<CUIXSwitcherSlot*> m_slots;
 public:
     // --- Constructors -----------------------------------------------
-    CUIXCanvas() : inherited("canvas") {}
-    ~CUIXCanvas() override;
-    // ----------------------------------------------------------------
-    // --- Casting ----------------------------------------------------
-    CUIXCanvas* ui_x_cast_canvas() override { return this; } 
+    CUIXSwitcher() : inherited("switcher") {}
+    ~CUIXSwitcher() override;
     // ----------------------------------------------------------------
     // --- Control ----------------------------------------------------
     void Draw() override;
@@ -89,13 +45,20 @@ public:
     bool OnMouseMove(int dx, int dy) override;
     bool OnKeyboardPressed(int key) override;
     // ----------------------------------------------------------------
+    // --- Casting ----------------------------------------------------
+    CUIXSwitcher* ui_x_cast_switcher() override { return this; } 
+    // ----------------------------------------------------------------
     // --- Debug info -------------------------------------------------
 #ifdef DEBUG_DRAW
     void RenderUIDebugNodeChild() override;
+    void RenderUIDebugProperties() override;
 #endif
+    // ----------------------------------------------------------------
+    void SetActiveSlotIndex(u8 index);
+    bool SetActiveSlot(CUIXWidget* pWidget);
+    u8 GetActiveSlotIndex() const { return m_activeSlotIndex; }
     // ----------------------------------------------------------------
     // --- Script Register --------------------------------------------
     DECLARE_SCRIPT_REGISTER_FUNCTION
     // ----------------------------------------------------------------
-
 };

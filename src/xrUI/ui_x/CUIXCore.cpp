@@ -1,12 +1,19 @@
 ﻿#include "stdafx.h"
 #include "CUIXCore.h"
+#include <luabind/luabind.hpp>
 
 #include "xrUIXmlParser.h"
-#include "common/CUIXHelper.h"
-#include "panels/CUIXCanvas.h"
+#include "../../../build/x64/Engine-Windows/_deps/sdl3-src/src/video/khronos/vulkan/vulkan_core.h"
+#include "../../xrEngine/xr_level_controller.h"
 #include "../xrEngine/XR_IOConsole.h"
+#include "common/CUIXHelper.h"
+#include "common/CUIXBrush.h"
+#include "panels/CUIXCanvas.h"
+#include "panels/CUIXSwitcher.h"
 #include "widgets/CUIXImage.h"
 #include "widgets/CUIXTextBlock.h"
+
+extern ENGINE_API float	psMouseUISens;
 
 UI_API CUIXCore* g_uiXCore = nullptr;
 
@@ -20,9 +27,13 @@ CUIXCore::CUIXCore()
     //Device.seqFrame.Add(this, REG_PRIORITY_NORMAL);
     Device.seqDeviceReset.Add(this,REG_PRIORITY_NORMAL);
     Device.seqResolutionChanged.Add(this, REG_PRIORITY_NORMAL);
+
+    m_pRoot = nullptr;
+    m_pCursor = nullptr;
+    m_pDialogHolder = nullptr;
+    m_pFocusedWidget = nullptr;
     
-    m_eCurrentPointType = IUIRender::pttTL;
-    Load();
+    //Load();
 
 #ifdef DEBUG_DRAW
     if (!Device.IsEditorMode())
@@ -45,14 +56,13 @@ void CUIXCore::Load()
     
     CUIXml uiXml;
     uiXml.Load(CONFIG_PATH, "ui_x", "layout.xml");
-    if (CUIXWidget* widget = CUIXHelper::CreateWidget(uiXml, xr_strdup("canvas")))
+    if (CUIXWidget* widget = CUIXHelper::CreateWidget(uiXml, xr_strdup("canvas"), ""))
     {
         m_pRoot = widget->ui_x_cast_canvas();
-        //m_pRoot->SetRect(0.0f, 0.0f, float(Device.TargetWidth), float(Device.TargetHeight));
-        
+        m_pDialogHolder = FindWidget("dialog_holder")->ui_x_cast_switcher();
+        m_pCursor = FindWidget("cursor");
+        m_pCursor->SetVisibility(EUIXVisibility::Hidden);
     }
-    m_pFrustum2d.CreateFromRect(Frect().set(0.0f, 0.0f, float(Device.TargetWidth),float(Device.TargetHeight)));
-
 #ifdef DEBUG_DRAW
     m_pDebugUIElement = nullptr;
 #endif
@@ -61,9 +71,22 @@ void CUIXCore::Load()
 
 void CUIXCore::UnLoad()
 {
+    ClearCache();
     if (m_pRoot != nullptr)
     {
         xr_delete(m_pRoot);   
+    }
+    if (m_pDialogHolder != nullptr)
+    {
+        xr_delete(m_pDialogHolder);
+    }
+    if (m_pCursor != nullptr)
+    {
+        xr_delete(m_pCursor);
+    }
+    if (m_pFocusedWidget != nullptr)
+    {
+        xr_delete(m_pFocusedWidget);
     }
 #ifdef DEBUG_DRAW
     m_pDebugUIElement = nullptr;
@@ -89,6 +112,250 @@ void CUIXCore::OnScreenResolutionChanged()
 {
     UnLoad();
     Load();
+}
+
+void CUIXCore::RegisterWidgetId(const shared_str& id, CUIXWidget* pElement)
+{
+    auto it = m_elementsCache.begin();
+    auto it_e = m_elementsCache.end();
+    for(;it!=it_e;++it)
+    {
+        if (xr_strcmp(id.c_str(), it->first.c_str()) == 0)
+        {
+            R_ASSERT3(true, "Duplicate UI ID in namespace", id.c_str());       
+        }
+    }
+    m_elementsCache[id] = pElement;
+}
+
+void CUIXCore::UnregisterWidgetId(const shared_str& id)
+{
+    auto it = m_elementsCache.find(id);
+    if (it != m_elementsCache.end()) 
+    {
+        m_elementsCache.erase(it);
+    }
+}
+
+CUIXWidget* CUIXCore::FindWidget(const shared_str& id)
+{
+    auto it = m_elementsCache.find(id);
+    if (it != m_elementsCache.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+CUIXWidget* CUIXCore::AddDialog(LPCSTR name, LPCSTR xmlPath)
+{
+    if (m_pDialogHolder == nullptr)
+    {
+        return nullptr;
+    }
+    if (FindWidget(name) != nullptr)
+    {
+        // widget already exist
+        return nullptr;
+    }
+    CUIXml uiXml;
+    uiXml.Load(CONFIG_PATH, "ui_x", xmlPath);
+    if (CUIXWidget* widget = CUIXHelper::CreateWidget(uiXml, xr_strdup("canvas"), name))
+    {
+        CUIXWidgetSlot* slot = m_pDialogHolder->AttachChild(widget);
+        slot->Rebuild();
+        widget->SetName(name);
+        return widget;
+    }
+    return nullptr;
+}
+
+CUIXWidget* CUIXCore::ShowDialog(LPCSTR name)
+{
+    if (m_pDialogHolder == nullptr)
+    {
+        return nullptr;
+    }
+    if (CUIXWidget* pWidget = FindWidget(name))
+    {
+        return ShowDialog(pWidget);
+    }
+    return nullptr;
+}
+
+CUIXWidget* CUIXCore::ShowDialog(CUIXWidget* pDialog)
+{
+    if (m_pDialogHolder == nullptr || pDialog == nullptr)
+    {
+        return nullptr;
+    }
+    if (m_pDialogHolder->SetActiveSlot(pDialog))
+    {
+        SetFocusedWidget(pDialog);
+        return pDialog;
+    }
+    return nullptr;
+}
+
+void CUIXCore::HideCurrentDialog()
+{
+    if (m_pDialogHolder != nullptr)
+    {
+        m_pDialogHolder->SetActiveSlotIndex(0);
+    }
+    SetFocusedWidget(nullptr);
+}
+
+void CUIXCore::UpdateInputMode(bool bCaptureMouse, bool bCaptureKeyboard)
+{
+    if (bCaptureMouse != m_bIsReceiveMouseInput)
+    {
+        m_bIsReceiveMouseInput = bCaptureMouse;
+        if (!m_pCursor)
+        {
+            return;
+        }
+        if (bCaptureMouse)
+        {
+            m_pCursor->SetVisibility(EUIXVisibility::Visible);
+            m_pCursor->GetParentSlot()->ui_x_cast_canvas_slot()->SetPosition(xr_vector2f().set(Device.TargetWidth * 0.5f, Device.TargetHeight * 0.5f), true);
+        }
+        else
+        {
+            m_pCursor->SetVisibility(EUIXVisibility::Hidden);
+        }
+    }
+    if (bCaptureKeyboard != m_bIsReceiveKeyBoardInput)
+    {
+        m_bIsReceiveKeyBoardInput = bCaptureKeyboard;
+    }
+}
+
+bool CUIXCore::OnMouseMove(int dx, int dy)
+{
+    if (m_pCursor == nullptr || !m_bIsReceiveMouseInput)
+    {
+        return false;
+    }
+    if (!CImGuiManager::Instance().IsCapturingInputs())
+    {
+        xr_vector2f pos;
+        if (psDeviceFlags.test(rsFullscreen))
+        {
+            float sens = psMouseUISens;
+            pos.x += (float)dx * sens;
+            pos.y += (float)dy * sens;
+        }
+        else
+        {
+            SDL_GetMouseState(&pos.x, &pos.y);
+        }
+
+        clamp(pos.x, 0.f, (float)Device.TargetWidth);
+        clamp(pos.y, 0.f, (float)Device.TargetHeight);
+
+        // todo: optimize it -> make cursor as unique widget  
+        m_pCursor->GetParentSlot()->ui_x_cast_canvas_slot()->SetPosition(pos, true);
+
+        // propagate event to active dialog
+        m_pDialogHolder->OnMouseMove(dx, dy);
+    }
+    return true;
+}
+
+bool CUIXCore::OnMouseHold(int key)
+{
+    return false;
+}
+
+bool CUIXCore::OnMousePress(int key)
+{
+    return false;
+}
+
+bool CUIXCore::OnMouseRelease(int key)
+{
+    return false;
+}
+
+bool CUIXCore::OnMouseWheel(int direction)
+{
+    return false;
+}
+
+bool CUIXCore::OnKeyboardPress(int key)
+{
+    if (!m_bIsReceiveKeyBoardInput || m_pFocusedWidget == nullptr)
+    {
+        return false;
+    }
+
+    CUIXWidget* pCurrent = m_pFocusedWidget;
+    while (pCurrent != nullptr)
+    {
+        if (pCurrent->OnKeyboardPressed(key))
+        {
+            return true;
+        }
+        if (pCurrent->GetParentSlot() != nullptr && pCurrent->GetParentSlot()->GetParent() != nullptr)
+        {
+            pCurrent = pCurrent->GetParentSlot()->GetParent();
+        }
+        else
+        {
+            pCurrent = nullptr;
+        }
+    }
+    /*
+    if (m_pDialogHolder && m_pDialogHolder->GetActiveSlotIndex() != 0)
+    {
+        if (key == kQUIT)
+        {
+            m_pDialogHolder->SetActiveSlotIndex(0);
+            UpdateInputMode(false, false);
+        } 
+    }*/
+    return true;
+}
+
+bool CUIXCore::OnKeyboardRelease(int key)
+{
+    if (!m_bIsReceiveKeyBoardInput)
+    {
+        return false;
+    }
+    return true;
+}
+
+bool CUIXCore::OnKeyboardHold(int key)
+{
+    if (!m_bIsReceiveKeyBoardInput)
+    {
+        return false;
+    }
+    return true;
+}
+
+xr_vector2f CUIXCore::GetCursorPosition() const
+{
+    if (m_pCursor != nullptr)
+    {
+        return m_pCursor->GetRect().lt;
+    }
+    return xr_vector2f();
+}
+
+void CUIXCore::SetFocusedWidget(CUIXWidget* pWidget)
+{
+    if (m_pFocusedWidget)
+    {
+        m_pFocusedWidget->OnFocusChanged(false);
+    }
+    m_pFocusedWidget = pWidget;
+    if (m_pFocusedWidget)
+    {
+        m_pFocusedWidget->OnFocusChanged(true);
+    }
 }
 
 #ifdef DEBUG_DRAW
@@ -146,6 +413,43 @@ void CUIXCore::RenderDebugger()
 	ImGui::End();
 }
 #endif
+
+void CUIXCore::script_register(lua_State *L)
+{
+    using namespace luabind;
+
+    CUIXElement::script_register(L);
+    CUIXWidget::script_register(L);
+    CUIXWidgetSlot::script_register(L);
+    CUIXBrush::script_register(L);
+    CUIXImage::script_register(L);
+    CUIXTextBlock::script_register(L);
+    
+    module(L)
+    [
+        class_<EUIXVisibility>("EUIXVisibility")
+            .enum_("constants")[
+                value("Visible", EUIXVisibility::Visible),
+                value("Hidden", EUIXVisibility::Hidden),
+                value("Collapsed", EUIXVisibility::Collapsed),
+                value("NonHit", EUIXVisibility::NonHit),
+                value("NonHitWithChild", EUIXVisibility::NonHitWithChild)
+            ],
+        class_<FUIXRenderTransform>("FUIXRenderTransform")
+            .def(constructor<>())
+            .def_readwrite("angle", &FUIXRenderTransform::angle)
+            .def_readwrite("pivot", &FUIXRenderTransform::pivot)
+        ,
+        class_<CUIXCore>("CUIXCore")
+            .def("AddDialog", &CUIXCore::AddDialog)
+            .def("ShowDialog", (CUIXWidget*(CUIXCore::*)(LPCSTR))&CUIXCore::ShowDialog)
+            .def("ShowDialog", (CUIXWidget*(CUIXCore::*)(CUIXWidget*))&CUIXCore::ShowDialog)
+            .def("HideCurrentDialog", &CUIXCore::HideCurrentDialog)
+            .def("UpdateInputMode", &CUIXCore::UpdateInputMode)
+        ,
+        def("ui_x", &ui_x)
+    ];
+}
 
 void FUIXVertex2d::RotatePt(const xr_vector2f& pivot, const float cosA, const float sinA)
 {

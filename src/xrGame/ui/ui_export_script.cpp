@@ -20,6 +20,7 @@
 #include "ui/UIMapInfo.h"
 #include "map_manager.h"
 #include "ScriptXMLInit.h"
+#include "../../xrUI/ui_x/CUIXCore.h"
 using namespace luabind;
 
 CMainMenu*	MainMenu();
@@ -33,6 +34,7 @@ int placeholder_func() // to keep game from crashing during menu init
 #pragma optimize("s",on)
 void UIRegistrator::script_register(lua_State *L)
 {
+	CUIXCore::script_register(L);
 	CUIWindow::script_register(L);
 	CUIMMShniaga::script_register(L);
 	CUIStatic::script_register(L);

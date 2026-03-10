@@ -168,3 +168,9 @@ void CUITextureMaster::GetTextureShader(const shared_str&  texture_name, ui_shad
 
 	sh->create("hud\\default", *((*it).second.file));	
 }
+
+LPCSTR CUITextureMaster::GetTextureFileName(const shared_str& texture_name)
+{
+	TEX_INFO info = FindItem(texture_name);
+	return info.get_file_name();
+}
