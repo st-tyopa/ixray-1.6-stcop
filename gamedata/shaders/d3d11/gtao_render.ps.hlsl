@@ -169,7 +169,7 @@ uint main(PSInput I) : SV_Target
 	float3 Normal, Point;
 	{
 		Normal = s_normal.SampleLevel(smp_nofilter, I.texcoord.xy, 0.0f).xyz;
-		Normal = NormalDecode(Normal.xy);
+		Normal = NormalDecode(Normal.xy * 2.0f - 1.0f);
 		Point = GbufferGetPointRealUnjitter(I.texcoord.xy, zbuffer);
     }
 
