@@ -4,10 +4,10 @@
 
 enum class EUIXDrawType : u8
 {
-    none,
-    box,
+    image,
     border,
-    image
+    box,
+    none
 };
 
 enum class EUIXTiling : u8
@@ -18,28 +18,37 @@ enum class EUIXTiling : u8
     both
 };
 
-//#define UI_X_BRUSH_VALID_SIZE (1<<0)
-//#define UI_X_BRUSH_VALID_RECT (1<<1)
-
 #define UI_X_DEFAULT_TEXTURE_NAME "$alphadxt1"
 //#define UI_X_DEFAULT_SHADER_NAME "hud\\default"
 #define UI_X_DEFAULT_SHADER_NAME "hud\\fog_of_war"
 
+
+
 class UI_API CUIXBrush
 {
-	ui_x_shader m_shader;
+    // for draw type image or central part in draw type box
+	ui_x_shader m_shader;   
+     // frame sides in draw type box or draw type frame
+    ui_x_shader m_frameLeftTop;
+    ui_x_shader m_frameLeft;
+    ui_x_shader m_frameLeftBottom;
+    ui_x_shader m_frameRightTop;
+    ui_x_shader m_frameRight;
+    ui_x_shader m_frameRightBottom;
+    ui_x_shader m_frameTop;
+    ui_x_shader m_frameBottom;
 
     /** visual */
     xr_rect_f m_uv;
     xr_vector2f m_size;
     u32 m_tint;
-    EUIXTiling m_tile;
-    EUIXDrawType m_drawType;
+    EUIXTiling m_tile = EUIXTiling::none;
+    EUIXDrawType m_drawType = EUIXDrawType::image;
 public:
     // --- Constructors -----------------------------------------------
-    CUIXBrush();
-    CUIXBrush(shared_str const& textureName);
-    CUIXBrush(shared_str const& textureName, shared_str const& shaderName);
+    CUIXBrush(EUIXDrawType drawType = EUIXDrawType::none);
+    CUIXBrush(shared_str const& textureName, EUIXDrawType drawType = EUIXDrawType::image);
+    CUIXBrush(shared_str const& textureName, shared_str const& shaderName, EUIXDrawType drawType = EUIXDrawType::image);
     virtual ~CUIXBrush() = default;
     // ----------------------------------------------------------------
     // --- Control ----------------------------------------------------
@@ -72,6 +81,7 @@ public:
     // ----------------------------------------------------------------
 private:
     // --- Control ----------------------------------------------------
-    void RenderInternal (const xr_rect_f& drawRect, const FUIXRenderTransform& renderTransform);
+    void RenderInternal (EUIXTiling tile, const xr_rect_f& drawRect, const FUIXRenderTransform& renderTransform) const;
+    void CreateFrameShader(shared_str const& textureName, shared_str const& shaderName);
     // ----------------------------------------------------------------
 };

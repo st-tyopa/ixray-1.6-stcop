@@ -56,6 +56,12 @@ void CLevel::IR_OnMouseWheel( int direction )
 	if (g_actor) g_actor->callback(GameObject::eMouseWheel)(direction);
 	/* avo: end */
 
+	if (g_uiXCore && g_uiXCore->IsReceiveMouseInput())
+	{
+		g_uiXCore->OnMouseWheel(direction);
+		return;
+	}
+	
 	if (CurrentGameUI()->IR_UIOnMouseWheel(direction)) return;
 	if( Device.Paused()
 #ifdef DEBUG
@@ -73,11 +79,32 @@ void CLevel::IR_OnMouseWheel( int direction )
 static int mouse_button_2_key[] = { MOUSE_1,MOUSE_2,MOUSE_3, MOUSE_4 , MOUSE_5 };
 
 void CLevel::IR_OnMousePress(int btn)
-{	IR_OnKeyboardPress(mouse_button_2_key[btn]);}
+{
+	if (g_uiXCore && g_uiXCore->IsReceiveMouseInput())
+	{
+		g_uiXCore->OnMousePress(btn);
+		return;
+	}
+	IR_OnKeyboardPress(mouse_button_2_key[btn]);
+}
 void CLevel::IR_OnMouseRelease(int btn)
-{	IR_OnKeyboardRelease(mouse_button_2_key[btn]);}
+{
+	if (g_uiXCore && g_uiXCore->IsReceiveMouseInput())
+	{
+		g_uiXCore->OnMouseRelease(btn);
+		return;
+	}
+	IR_OnKeyboardRelease(mouse_button_2_key[btn]);
+}
 void CLevel::IR_OnMouseHold(int btn)
-{	IR_OnKeyboardHold(mouse_button_2_key[btn]);}
+{
+	if (g_uiXCore && g_uiXCore->IsReceiveMouseInput())
+	{
+		g_uiXCore->OnMouseHold(btn);
+		return;
+	}
+	IR_OnKeyboardHold(mouse_button_2_key[btn]);
+}
 
 void CLevel::IR_OnMouseMove( int dx, int dy )
 {

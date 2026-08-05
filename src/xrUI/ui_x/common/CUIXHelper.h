@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "../xrCore/FormatParsers/XML/xrXMLParser.h"
 
+class CUIXInventoryGrid;
+class CUIXBrush;
 class CUIXHorizontalBox;
 class CUIXVerticalBox;
 class CUIXSwitcher;
@@ -20,6 +22,8 @@ public:
     static CUIXWidget* CreateWidget(CUIXml& xml, string_path path, const shared_str& prefix);
     
     static CUIXCanvas* CreateCanvas(CUIXml& xml, XML_NODE* canvasNode, const shared_str& prefix);
+
+    static CUIXInventoryGrid* CreateInventoryGrid(CUIXml& xml, XML_NODE* gridNode, const shared_str& prefix);
     
     static CUIXImage* CreateImage(CUIXml& xml, XML_NODE* imageNode, const shared_str& prefix);
 
@@ -32,4 +36,6 @@ public:
     static CUIXVerticalBox* CreateVerticalBox(CUIXml& xml, XML_NODE* boxNode, const shared_str& prefix);
     
     static CUIXHorizontalBox* CreateHorizontalBox(CUIXml& xml, XML_NODE* boxNode, const shared_str& prefix);
+
+    static CUIXBrush* CreateBrush(CUIXml& xml, const shared_str& nodeName);
 };

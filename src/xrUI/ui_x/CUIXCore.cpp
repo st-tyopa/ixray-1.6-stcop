@@ -59,7 +59,7 @@ void CUIXCore::Load()
     if (CUIXWidget* widget = CUIXHelper::CreateWidget(uiXml, xr_strdup("canvas"), ""))
     {
         m_pRoot = widget->ui_x_cast_canvas();
-        m_pRoot->SetRect(0.0f, 0.0f, Device.TargetWidth, Device.TargetHeight);
+        m_pRoot->SetRect(0.0f, 0.0f, Device.TargetWidth, Device.TargetHeight);        
         m_pRoot->Rebuild();
         m_pDialogHolder = FindWidget("dialog_holder")->ui_x_cast_switcher();
         m_pCursor = FindWidget("cursor");
@@ -78,6 +78,7 @@ void CUIXCore::UnLoad()
     {
         xr_delete(m_pRoot);   
     }
+    /*
     if (m_pDialogHolder != nullptr)
     {
         xr_delete(m_pDialogHolder);
@@ -89,7 +90,7 @@ void CUIXCore::UnLoad()
     if (m_pFocusedWidget != nullptr)
     {
         xr_delete(m_pFocusedWidget);
-    }
+    }*/
 #ifdef DEBUG_DRAW
     m_pDebugUIElement = nullptr;
 #endif

@@ -3,6 +3,10 @@
 #include "../../xrScripts/script_export_space.h"
 #include "../../xrScripts/script_space_forward.h"
 
+class CUIXScaleBoxSlot;
+class CUIXScaleBox;
+class CUIXInventoryGrid;
+class CUIXInventoryItem;
 class CUIXHorizontalBox;
 class CUIXHorizontalBoxSlot;
 class CUIXVerticalBoxSlot;
@@ -94,6 +98,7 @@ public:
     virtual CUIXSwitcherSlot*       ui_x_cast_switcher_slot()       { return nullptr; }
     virtual CUIXVerticalBoxSlot*    ui_x_cast_vertical_box_slot()   { return nullptr; }
     virtual CUIXHorizontalBoxSlot*  ui_x_cast_horizontal_box_slot() { return nullptr; }
+    virtual CUIXScaleBoxSlot*       ui_x_cast_scale_box_slot()      { return nullptr; }
     // ----------------------------------------------------------------
     // --- Getters And Setters ----------------------------------------
     void            SetWidget       (CUIXWidget* widget);
@@ -146,6 +151,9 @@ public:
     virtual CUIXSwitcher*       ui_x_cast_switcher()        { return nullptr; }
     virtual CUIXVerticalBox*    ui_x_cast_vertical_box()    { return nullptr; }
     virtual CUIXHorizontalBox*  ui_x_cast_horizontal_box()  { return nullptr; }
+    virtual CUIXInventoryGrid*  ui_x_cast_inventory_grid()  { return nullptr; }
+    virtual CUIXInventoryItem*  ui_x_cast_inventory_item()  { return nullptr; }
+    virtual CUIXScaleBox*       ui_x_cast_scale_box()       { return nullptr; }
     // ----------------------------------------------------------------
     // --- Getters And Setters ----------------------------------------
     void SetName(const shared_str& name) override;

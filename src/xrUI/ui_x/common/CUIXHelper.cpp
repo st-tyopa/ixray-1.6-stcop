@@ -4,6 +4,7 @@
 #include "CUIXBrush.h"
 #include "xrUIXmlParser.h"
 #include "../xrEngine/string_table.h"
+#include "ui_x/inventory/CUIXInventoryGrid.h"
 #include "ui_x/panels/CUIXCanvas.h"
 #include "ui_x/panels/CUIXHorizontalBox.h"
 #include "ui_x/panels/CUIXSwitcher.h"
@@ -47,6 +48,10 @@ CUIXWidget* CUIXHelper::CreateWidget(CUIXml& xml, string_path path, const shared
         else if (nodeName == "horizontal_box")
         {
             widget = CreateHorizontalBox(xml, node, prefix)->ui_x_cast_widget();
+        }
+        else if (nodeName == "inventory_grid")
+        {
+            widget = CreateInventoryGrid(xml, node, prefix)->ui_x_cast_widget();
         }
         
         if (widget && widgetId != "_")
@@ -134,37 +139,27 @@ CUIXCanvas* CUIXHelper::CreateCanvas(CUIXml& xml, XML_NODE* canvasNode, const sh
     return canvas;
 }
 
+CUIXInventoryGrid* CUIXHelper::CreateInventoryGrid(CUIXml& xml, XML_NODE* gridNode, const shared_str& prefix)
+{
+    CUIXInventoryGrid* inventoryGrid = new CUIXInventoryGrid();
+    inventoryGrid->SetGridBrush(CreateBrush(xml, "brush"));
+
+    xr_vector2i gridSize;
+    gridSize.x = xml.ReadAttribInt(gridNode, "grid_w", 1);
+    gridSize.y = xml.ReadAttribInt(gridNode, "grid_h", 1);
+    inventoryGrid->SetGridSize(gridSize);
+
+    xr_vector2f cellSize;
+    cellSize.x = xml.ReadAttribFlt(gridNode, "cell_w", 32.0f);
+    cellSize.y = xml.ReadAttribFlt(gridNode, "cell_h", 32.0f);
+    inventoryGrid->SetCellSize(cellSize);
+    
+    return inventoryGrid;
+}
+
 CUIXImage* CUIXHelper::CreateImage(CUIXml& xml, XML_NODE* imageNode, const shared_str& prefix)
 {
-    CUIXImage* image;// = nullptr;
-    if (XML_NODE* node = xml.NavigateToNode("brush", 0))
-    {
-        const shared_str textureName = xml.ReadAttrib(node, "tx", UI_X_DEFAULT_TEXTURE_NAME);
-        const shared_str shaderName = xml.ReadAttrib(node, "sh", UI_X_DEFAULT_SHADER_NAME);
-        CUIXBrush* brush = new CUIXBrush(textureName, shaderName);
-
-        xr_string tint = xml.ReadAttrib(node, "tint", "0xFFFFFFFF");
-        if (tint == "0xFFFFFFFF")
-        {
-            const u8 tint_a = (u8)xml.ReadAttribInt(node, "a", 255);
-            const u8 tint_r = (u8)xml.ReadAttribInt(node, "r", 255);
-            const u8 tint_g = (u8)xml.ReadAttribInt(node, "g", 255);
-            const u8 tint_b = (u8)xml.ReadAttribInt(node, "b", 255);
-            brush->SetTint(tint_a, tint_r, tint_g, tint_b);   
-        }
-        else
-        {
-            brush->SetTint((u32)strtoul(tint.c_str(), nullptr, 16));
-        }
-        
-        image = new CUIXImage(brush);
-    }
-    else
-    {
-        image = new CUIXImage(new CUIXBrush());
-    }
-    
-    return image;
+    return new CUIXImage(CreateBrush(xml, "brush"));
 }
 
 CUIXTextBlock* CUIXHelper::CreateTextBlock(CUIXml& xml, XML_NODE* textNode, const shared_str& prefix)
@@ -199,33 +194,7 @@ CUIXTextBlock* CUIXHelper::CreateTextBlock(CUIXml& xml, XML_NODE* textNode, cons
 
 CUIXBorder* CUIXHelper::CreateBorder(CUIXml& xml, XML_NODE* borderNode, const shared_str& prefix)
 {
-    CUIXBorder* border;
-    if (XML_NODE* node = xml.NavigateToNode("brush", 0))
-    {
-        const shared_str textureName = xml.ReadAttrib(node, "tx", UI_X_DEFAULT_TEXTURE_NAME);
-        const shared_str shaderName = xml.ReadAttrib(node, "sh", UI_X_DEFAULT_SHADER_NAME);
-        CUIXBrush* brush = new CUIXBrush(textureName, shaderName);
-
-        xr_string tint = xml.ReadAttrib(node, "tint", "0xFFFFFFFF");
-        if (tint == "0xFFFFFFFF")
-        {
-            const u8 tint_a = (u8)xml.ReadAttribInt(node, "a", 255);
-            const u8 tint_r = (u8)xml.ReadAttribInt(node, "r", 255);
-            const u8 tint_g = (u8)xml.ReadAttribInt(node, "g", 255);
-            const u8 tint_b = (u8)xml.ReadAttribInt(node, "b", 255);
-            brush->SetTint(tint_a, tint_r, tint_g, tint_b);   
-        }
-        else
-        {
-            brush->SetTint((u32)strtoul(tint.c_str(), nullptr, 16));
-        }
-        
-        border = new CUIXBorder(brush);
-    }
-    else
-    {
-        border = new CUIXBorder(new CUIXBrush());
-    }
+    CUIXBorder* border = new CUIXBorder(CreateBrush(xml, "brush"));
 
     if (XML_NODE* slotNode = xml.NavigateToNode("border_slot", 0))
     {
@@ -370,4 +339,67 @@ CUIXHorizontalBox* CUIXHelper::CreateHorizontalBox(CUIXml& xml, XML_NODE* boxNod
         xml.SetLocalRoot(boxNode);
     }
     return horizontalBox;
+}
+
+CUIXBrush* CUIXHelper::CreateBrush(CUIXml& xml, const shared_str& nodeName)
+{
+    XML_NODE* node = xml.NavigateToNode(nodeName.c_str(), 0);
+    if (node == nullptr)
+    {
+        return new CUIXBrush();
+    }
+    const shared_str textureName = xml.ReadAttrib(node, "tx", UI_X_DEFAULT_TEXTURE_NAME);
+    const shared_str shaderName = xml.ReadAttrib(node, "sh", UI_X_DEFAULT_SHADER_NAME);
+    const xr_string dtAttr = xml.ReadAttrib(node, "dt", "image");
+    
+    EUIXDrawType drawType = EUIXDrawType::image;
+    if (dtAttr == "box")
+    {
+        drawType = EUIXDrawType::box;
+    }
+    else if (dtAttr == "border")
+    {
+        drawType = EUIXDrawType::border;
+    }
+    else if (dtAttr == "none")
+    {
+        drawType = EUIXDrawType::none;
+    }
+        
+    CUIXBrush* brush = new CUIXBrush(textureName, shaderName, drawType);
+
+    xr_string tint = xml.ReadAttrib(node, "tint", "0xFFFFFFFF");
+    if (tint == "0xFFFFFFFF")
+    {
+        const u8 tint_a = (u8)xml.ReadAttribInt(node, "a", 255);
+        const u8 tint_r = (u8)xml.ReadAttribInt(node, "r", 255);
+        const u8 tint_g = (u8)xml.ReadAttribInt(node, "g", 255);
+        const u8 tint_b = (u8)xml.ReadAttribInt(node, "b", 255);
+        brush->SetTint(tint_a, tint_r, tint_g, tint_b);   
+    }
+    else
+    {
+        brush->SetTint((u32)strtoul(tint.c_str(), nullptr, 16));
+    }
+        
+    if (drawType == EUIXDrawType::image)
+    {
+        const xr_string tile = xml.ReadAttrib(node, "tile", "none");
+        EUIXTiling tiling = EUIXTiling::none;
+        if (tile == "vert")
+        {
+            tiling = EUIXTiling::vertical;
+        }
+        else if (tile == "horz")
+        {
+            tiling = EUIXTiling::horizontal;
+        }
+        else if (tile == "both")
+        {
+            tiling = EUIXTiling::both;
+        }
+        brush->SetTile(tiling);
+    }
+        
+    return brush;
 }

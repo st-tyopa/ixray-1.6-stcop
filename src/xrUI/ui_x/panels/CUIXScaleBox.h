@@ -1,62 +1,23 @@
 ﻿#pragma once
-#include "ui_x/UIXDefs.h"
 #include "ui_x/common/CUIXWidget.h"
-#include "../../xrScripts/script_export_space.h"
 
-class CUIXWidget;
 
-enum class EUIXAnchor : u8
-{
-    ltAnchor,
-    lcAnchor,
-    lbAnchor,
-    ctAnchor,
-    ccAnchor,
-    cbAnchor,
-    rtAnchor,
-    rcAnchor,
-    rbAnchor,
-    ftAnchor,
-    fcAnchor,
-    fbAnchor,
-    lfAnchor,
-    cfAnchor,
-    rfAnchor,
-    ffAnchor,
-};
-
-class CUIXCanvasSlot : public CUIXWidgetSlot
+class CUIXScaleBoxSlot : public CUIXWidgetSlot
 {
     using inherited = CUIXWidgetSlot;
-protected:
-    xr_vector2f m_size;
-    xr_vector2f m_position;
-    EUIXAnchor m_anchor = EUIXAnchor::ltAnchor;
-    xr_vector2f m_alignment;
-
 public:
     // --- Constructors -----------------------------------------------
-    CUIXCanvasSlot(CUIXWidget* parent) : inherited("canvas_slot", parent) {}
-    ~CUIXCanvasSlot() override = default;
+    CUIXScaleBoxSlot(CUIXWidget* parent) : inherited("scale_box_slot", parent) {}
+    ~CUIXScaleBoxSlot() override = default;
     // ----------------------------------------------------------------
     // --- Casting ----------------------------------------------------
-    CUIXCanvasSlot* ui_x_cast_canvas_slot() override { return this; }
+    CUIXScaleBoxSlot* ui_x_cast_scale_box_slot() override { return this; }
     // ----------------------------------------------------------------
     // --- Control ----------------------------------------------------
     void Rebuild() override;
     // ----------------------------------------------------------------
     // --- Getters And Setters ----------------------------------------
-    void            SetAnchor       (EUIXAnchor anchor, bool forceRebuild = true);
-    EUIXAnchor      GetAnchor       () const { return m_anchor; }
     
-    void            SetAlignment    (const xr_vector2f& alignment, bool forceRebuild = true);
-    xr_vector2f     GetAlignment    () const { return m_alignment; }
-
-    void            SetPosition     (const xr_vector2f& position, bool forceRebuild = true);
-    xr_vector2f     GetPosition     () const { return m_position; }
-    
-    void            SetSize         (const xr_vector2f& size, bool forceRebuild = true);
-    xr_vector2f     GetSize         () const { return m_size; }
     // ----------------------------------------------------------------
     // --- Debug info -------------------------------------------------
 #ifdef DEBUG_DRAW
@@ -68,27 +29,21 @@ public:
     // ----------------------------------------------------------------
 };
 
-class CUIXCanvas : public CUIXWidget
+class CUIXScaleBox : public CUIXWidget
 {
-    using inherited = CUIXWidget;
-    xr_list<CUIXCanvasSlot*> m_slots;
+    using inherited = CUIXWidget;  
 public:
     // --- Constructors -----------------------------------------------
-    CUIXCanvas() : inherited("canvas") {}
-    CUIXCanvas(const shared_str& namePrefix) : inherited(namePrefix) {}
-    ~CUIXCanvas() override;
+    CUIXScaleBox() : inherited("scale_box") {}
+    ~CUIXScaleBox() override = default;
     // ----------------------------------------------------------------
     // --- Casting ----------------------------------------------------
-    CUIXCanvas* ui_x_cast_canvas() override { return this; } 
+    CUIXScaleBox* ui_x_cast_scale_box() override { return this; }
     // ----------------------------------------------------------------
     // --- Control ----------------------------------------------------
     void Draw() override;
     void Rebuild() override;
     CUIXWidgetSlot* AttachChild(CUIXWidget* widget) override;
-    // ----------------------------------------------------------------
-    // --- Input ------------------------------------------------------
-    bool OnMouseMove(int dx, int dy) override;
-    bool OnKeyboardPressed(int key) override;
     // ----------------------------------------------------------------
     // --- Debug info -------------------------------------------------
 #ifdef DEBUG_DRAW
@@ -98,5 +53,5 @@ public:
     // --- Script Register --------------------------------------------
     DECLARE_SCRIPT_REGISTER_FUNCTION
     // ----------------------------------------------------------------
-
 };
+

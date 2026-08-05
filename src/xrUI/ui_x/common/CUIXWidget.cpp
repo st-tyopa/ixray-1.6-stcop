@@ -174,6 +174,12 @@ void CUIXWidget::RenderUIDebugProperties()
         clamp(angle, -180.0f, 180.0f);
         m_renderTransform.angle = angle * PI / 180.0f;
     }
+
+    xr_vector2f scale = xr_vector2f().set(m_renderTransform.scale.x, m_renderTransform.scale.y);
+    if (ImGui::DragFloat2("Scale", reinterpret_cast<float*>(&scale), 0.1f))
+    {
+        m_renderTransform.scale = scale;
+    }
 }
 #endif
 

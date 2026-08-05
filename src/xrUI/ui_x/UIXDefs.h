@@ -8,6 +8,7 @@
 
 using ui_x_shader = FactoryPtr<IUIShader>;
 using xr_vector2f = _vector2<float>;
+using xr_vector2i = _vector2<int>;
 using xr_plane2f = _plane2<float>;
 using xr_rect_f = _rect<float>;
 
@@ -51,10 +52,12 @@ struct UI_API FUIXRenderTransform
 {
     float angle;
     xr_vector2f	pivot;
+    xr_vector2f	scale;
     FUIXRenderTransform ()
     {
         angle = 0;
         pivot.set(0.5f, 0.5f);
+        scale.set(1.0f, 1.0f);
     }
 };
 
